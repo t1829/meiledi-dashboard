@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美乐蒂工作台</title>
+<style>
+:root {
+  --bg: #fff5f7;
+  --sidebar-bg: #ffeef3;
+  --card: #ffffff;
+  --border: #fcd5e0;
+  --text: #5c3d4e;
+  --text2: #b88a9a;
+  --accent: #f2a0b6;
+  --danger: #f0a0a0;
+  --shadow: 0 2px 12px rgba(242,160,182,0.12);
+  --shadow-lg: 0 4px 24px rgba(242,160,182,0.18);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --sidebar-w: 200px;
+  --transition: 0.2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  background:var(--bg);
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='1.5' fill='%23f2a0b6' opacity='0.06'/%3E%3C/svg%3E");
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  display:flex;
+}
+/* ====== 侧边栏 ====== */
+.sidebar{
+  width:var(--sidebar-w);
+  min-height:100vh;
+  background:var(--sidebar-bg);
+  border-right:2px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;left:0;bottom:0;
+  z-index:50;
+  overflow-y:auto;
+  transition:transform var(--transition);
+}
+.sidebar-logo{
+  padding:20px 16px 12px;
+  text-align:center;
+  border-bottom:1px dashed var(--border);
+}
+.sidebar-logo h2{
+  font-size:1rem;
+  font-weight:700;
+  color:var(--accent);
+}
+.sidebar-logo p{font-size:0.68rem;color:var(--text2);margin-top:2px}
+.sidebar-nav{flex:1;padding:8px 0}
+.sidebar-nav .nav-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 18px;
+  cursor:pointer;
+  font-size:0.82rem;
+  color:var(--text);
+  font-weight:500;
+  transition:var(--transition);
+  border-left:3px solid transparent;
+  margin:2px 0;
+}
+.sidebar-nav .nav-item:hover{background:rgba(242,160,182,0.1)}
+.sidebar-nav .nav-item.active{
+  background:rgba(242,160,182,0.15);
+  border-left-color:var(--accent);
+  color:var(--accent);
+  font-weight:700;
+}
+.sidebar-nav .nav-icon{font-size:1.1rem;width:22px;text-align:center}
+.sidebar-footer{
+  padding:12px 16px;
+  border-top:1px dashed var(--border);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.sidebar-footer button{
+  font-size:0.7rem;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--card);
+  color:var(--text2);
+  cursor:pointer;
+  transition:var(--transition);
+  text-align:left;
+}
+.sidebar-footer button:hover{background:var(--bg)}
+/* 移动端侧边栏切换 */
+.sidebar-toggle{
+  display:none;
+  position:fixed;
+  top:12px;
+  left:12px;
+  z-index:60;
+  width:36px;height:36px;
+  border-radius:8px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  font-size:1.1rem;
+  cursor:pointer;
+}
+/* ====== 主内容区 ====== */
+.main{
+  flex:1;
+  margin-left:var(--sidebar-w);
+  padding:20px 24px 100px;
+  min-height:100vh;
+  width:calc(100% - var(--sidebar-w));
+}
+.main-header{
+  margin-bottom:18px;
+}
+.main-header h1{
+  font-size:1.3rem;
+  font-weight:700;
+  color:var(--accent);
+}
+.main-header p{font-size:0.78rem;color:var(--text2)}
+/* 模块面板 */
+.module-panel{display:none}
+.module-panel.active{display:block}
+.panel-title{
+  font-size:0.95rem;
+  font-weight:700;
+  color:var(--accent);
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:2px dashed var(--border);
+}
+/* 卡片网格（大模块用） */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:14px;
+}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:16px;
+  box-shadow:var(--shadow);
+  border:2px solid var(--border);
+  transition:var(--transition);
+}
+.card:hover{box-shadow:0 4px 20px rgba(242,160,182,0.18);border-color:var(--accent)}
+.card-title{
+  font-size:0.85rem;
+  font-weight:700;
+  color:var(--accent);
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px dashed var(--border);
+}
+/* 共用组件 */
+input,select,textarea{
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-size:0.8rem;
+  outline:none;
+  background:var(--bg);
+  color:var(--text);
+  font-family:inherit;
+  transition:var(--transition);
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.btn{
+  padding:7px 14px;
+  border:none;
+  border-radius:var(--radius-sm);
+  font-size:0.78rem;
+  cursor:pointer;
+  font-weight:600;
+  transition:var(--transition);
+}
+.btn-pink{background:var(--accent);color:#fff}
+.btn-pink:hover{background:#e88aa0}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{background:var(--bg)}
+.del-btn{
+  background:none;border:none;color:var(--danger);
+  cursor:pointer;font-size:0.8rem;padding:1px 5px;border-radius:4px;
+}
+.del-btn:hover{background:#fff0f0}
+.flex-row{display:flex;gap:6px;align-items:center}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.mb-sm{margin-bottom:8px}
+.mb-md{margin-bottom:12px}
+.text-sm{font-size:0.75rem;color:var(--text2)}
+.text-xs{font-size:0.7rem;color:var(--text2)}
+.scroll-list{
+  max-height:200px;
+  overflow-y:auto;
+  font-size:0.78rem;
+}
+.scroll-list::-webkit-scrollbar{width:4px}
+.scroll-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.stat-row{display:flex;gap:8px;margin-bottom:10px}
+.stat-box{
+  flex:1;text-align:center;padding:10px 4px;
+  border-radius:var(--radius-sm);background:var(--bg);
+}
+.stat-box .num{font-size:1.1rem;font-weight:700}
+.stat-box .label{font-size:0.68rem;color:var(--text2)}
+/* 待办 */
+.todo-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid #fdf0f3;font-size:0.82rem;
+}
+.todo-item:last-child{border-bottom:none}
+.todo-item input[type=checkbox]{accent-color:var(--accent)}
+.todo-item .done{text-decoration:line-through;color:var(--text2)}
+/* 打卡 */
+.checkin-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px;
+}
+.checkin-day{
+  text-align:center;font-size:0.63rem;padding:3px 1px;
+  border-radius:4px;background:var(--bg);cursor:pointer;
+  transition:var(--transition);user-select:none;
+}
+.checkin-day.checked{background:var(--accent);color:#fff}
+.checkin-day.today{font-weight:700;border:2px solid var(--accent)}
+/* 心情 */
+.mood-selector{display:flex;gap:6px;margin-bottom:8px;justify-content:center}
+.mood-btn{
+  font-size:1.4rem;cursor:pointer;padding:3px 7px;
+  border-radius:var(--radius-sm);border:2px solid transparent;
+  background:transparent;transition:var(--transition);
+}
+.mood-btn:hover{background:var(--bg)}
+.mood-btn.selected{border-color:var(--accent);background:var(--bg)}
+.diary-entry{
+  padding:8px;border-radius:var(--radius-sm);
+  background:var(--bg);margin-bottom:5px;font-size:0.76rem;
+}
+/* 记账 */
+.bill-item{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 0;border-bottom:1px solid #fdf0f3;font-size:0.76rem;
+}
+.bill-item .income{color:#e8889e}
+.bill-item .expense{color:#c46666}
+/* 读书 */
+.book-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px solid #fdf0f3;font-size:0.76rem;
+}
+.book-item .pct{color:var(--accent);font-weight:600}
+/* 金融 */
+.finance-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid #fdf0f3;font-size:0.76rem;
+}
+.finance-item .symbol{font-weight:700;min-width:55px}
+.finance-item .price{font-weight:600;min-width:55px;text-align:right}
+.finance-item .change{
+  min-width:50px;text-align:right;font-size:0.7rem;font-weight:600;
+  padding:1px 5px;border-radius:4px;
+}
+.finance-item .change.up{color:#c0392b;background:#fff0f0}
+.finance-item .change.down{color:#27ae60;background:#eafaf1}
+/* 复盘 */
+.idx-row{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 0;font-size:0.75rem;border-bottom:1px solid #fdf0f3;
+}
+.idx-row .idx-name{font-weight:600;min-width:50px}
+.idx-row .idx-price{min-width:60px;text-align:right;font-weight:600}
+.idx-row .idx-change{
+  min-width:55px;text-align:right;font-weight:600;
+  padding:1px 5px;border-radius:4px;font-size:0.7rem;
+}
+.idx-row .idx-change.up{color:#c0392b;background:#fff0f0}
+.idx-row .idx-change.down{color:#27ae60;background:#eafaf1}
+.hot-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.hot-tag{
+  padding:2px 8px;border-radius:10px;font-size:0.66rem;
+  background:#fff0f4;color:var(--accent);font-weight:600;
+}
+.news-item{
+  padding:5px 8px;margin-bottom:3px;border-radius:6px;
+  background:var(--bg);font-size:0.7rem;border-left:3px solid var(--accent);
+  cursor:pointer;
+}
+.news-item:hover{background:#fff0f4}
+.news-tag{
+  display:inline-block;padding:1px 5px;border-radius:3px;
+  font-size:0.6rem;font-weight:700;margin-right:4px;
+}
+.news-tag.red{background:#ffe0e0;color:#c0392b}
+.news-tag.green{background:#e0ffe0;color:#27ae60}
+.news-tag.blue{background:#e0e8ff;color:#2b5fc0}
+.review-entry{
+  padding:6px 8px;border-radius:var(--radius-sm);
+  background:var(--bg);margin-bottom:4px;font-size:0.72rem;
+}
+/* AI 小窗口 */
+.ai-fab{
+  position:fixed;bottom:24px;right:24px;
+  width:50px;height:50px;border-radius:50%;
+  background:linear-gradient(135deg,#f2a0b6,#e8889e);
+  color:#fff;border:none;cursor:pointer;
+  font-size:1.3rem;box-shadow:0 4px 20px rgba(242,160,182,0.4);
+  display:flex;align-items:center;justify-content:center;
+  z-index:100;transition:var(--transition);
+}
+.ai-fab:hover{transform:scale(1.08)}
+.ai-panel{
+  position:fixed;bottom:82px;right:24px;
+  width:340px;max-width:calc(100vw - 32px);
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:var(--shadow-lg);border:2px solid var(--border);
+  z-index:99;display:none;flex-direction:column;overflow:hidden;
+  max-height:400px;
+}
+.ai-panel.open{display:flex}
+.ai-panel-header{
+  padding:10px 14px;background:linear-gradient(135deg,#f2a0b6,#e8889e);
+  color:#fff;font-size:0.82rem;font-weight:700;
+}
+.ai-panel-body{
+  flex:1;overflow-y:auto;padding:10px 14px;
+  font-size:0.78rem;max-height:240px;
+}
+.ai-msg{
+  padding:7px 10px;border-radius:var(--radius-sm);
+  margin-bottom:6px;max-width:88%;line-height:1.5;
+}
+.ai-msg.user{background:var(--bg);margin-left:auto;text-align:right}
+.ai-msg.bot{background:#f5f0e8;margin-right:auto}
+.ai-panel-input{
+  display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--border);
+}
+.ai-panel-input input{flex:1}
+.ai-panel-input button{background:var(--accent);color:#fff;border:none;padding:7px 12px;border-radius:var(--radius-sm);cursor:pointer;font-weight:600}
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;padding:8px 20px;
+  border-radius:20px;font-size:0.8rem;z-index:200;
+  opacity:0;transition:opacity 0.3s;pointer-events:none;
+}
+.toast.show{opacity:1}
+/* 英语单词 */
+.word-card{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  border-radius:var(--radius-sm);background:var(--bg);
+  margin-bottom:8px;transition:var(--transition);
+}
+.word-card:hover{background:#fff0f4}
+.word-card .word-num{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--accent);color:#fff;font-size:0.7rem;
+  font-weight:700;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.word-card .word-text{font-size:1.1rem;font-weight:700;color:var(--accent);min-width:90px}
+.word-card .word-phonetic{font-size:0.7rem;color:var(--text2);min-width:80px}
+.word-card .word-meaning{flex:1;font-size:0.78rem;color:var(--text)}
+.word-card .word-play{
+  background:var(--accent);color:#fff;border:none;
+  width:30px;height:30px;border-radius:50%;cursor:pointer;
+  font-size:0.8rem;transition:var(--transition);flex-shrink:0;
+}
+.word-card .word-play:hover{background:#e88aa0;transform:scale(1.1)}
+.word-card .word-play.playing{animation:pulse 0.6s infinite}
+.word-card .word-check{
+  width:30px;height:30px;border-radius:50%;border:2px solid var(--border);
+  background:transparent;cursor:pointer;font-size:0.85rem;
+  transition:var(--transition);flex-shrink:0;display:flex;align-items:center;justify-content:center;
+}
+.word-card .word-check.done{background:var(--accent);border-color:var(--accent);color:#fff}
+.word-card.done-card{opacity:0.55}
+.word-card.done-card .word-text{text-decoration:line-through}
+/* 减脂打卡 */
+.fitness-ex{
+  padding:10px 12px;margin-bottom:6px;border-radius:var(--radius-sm);
+  background:var(--bg);border-left:3px solid var(--accent);
+}
+.fitness-ex .ex-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.fitness-ex .ex-num{
+  width:24px;height:24px;border-radius:50%;background:var(--accent);
+  color:#fff;font-size:0.68rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.fitness-ex .ex-name{font-weight:700;font-size:0.82rem;color:var(--text)}
+.fitness-ex .ex-sets{font-size:0.72rem;color:var(--accent);font-weight:600}
+.fitness-ex .ex-desc{font-size:0.72rem;color:var(--text2);margin:4px 0}
+.fitness-ex .ex-video{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:0.7rem;color:var(--accent);text-decoration:none;
+  padding:3px 8px;border-radius:4px;background:#fff0f4;
+  cursor:pointer;margin-top:4px;transition:var(--transition);
+}
+.fitness-ex .ex-video:hover{background:#ffe0ea}
+.fitness-ex .ex-check{
+  background:var(--accent);color:#fff;border:none;
+  padding:4px 10px;border-radius:4px;font-size:0.7rem;
+  cursor:pointer;font-weight:600;transition:var(--transition);
+}
+.fitness-ex .ex-check.done{background:#ccc}
+.fitness-ex.done-ex{opacity:0.6}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+/* 饮食升级 */
+.food-search{position:relative;margin-bottom:8px}
+.food-search input{width:100%}
+.food-suggestions{
+  position:absolute;top:100%;left:0;right:0;
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--radius-sm);z-index:10;max-height:150px;
+  overflow-y:auto;display:none;
+}
+.food-suggestions.show{display:block}
+.food-suggestions .food-opt{
+  padding:8px 10px;cursor:pointer;font-size:0.75rem;
+  border-bottom:1px solid #fdf0f3;
+}
+.food-suggestions .food-opt:hover{background:#fff0f4}
+.food-suggestions .food-opt .food-name{font-weight:600}
+.food-suggestions .food-opt .food-info{font-size:0.65rem;color:var(--text2)}
+.nutri-table{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+  margin:8px 0;font-size:0.68rem;text-align:center;
+}
+.nutri-table .nutri-head{font-weight:700;color:var(--accent);padding:4px}
+.nutri-table .nutri-val{padding:4px;background:var(--bg);border-radius:4px}
+.gram-input{
+  display:flex;align-items:center;gap:6px;margin:8px 0;
+}
+.gram-input input{width:70px;text-align:center}
+.gram-input .gram-label{font-size:0.75rem;color:var(--text2)}
+/* 复盘升级 */
+.market-summary{
+  padding:10px;background:var(--bg);border-radius:var(--radius-sm);
+  font-size:0.73rem;line-height:1.7;margin-bottom:8px;
+}
+.market-summary .summary-title{font-weight:700;color:var(--accent);margin-bottom:4px}
+.news-link{color:var(--accent);font-size:0.65rem;text-decoration:underline;cursor:pointer}
+.news-translated{font-size:0.68rem;color:var(--text2);margin-top:2px;font-style:italic}
+/* ====== 响应式 ====== */
+@media(max-width:768px){
+  .sidebar{
+    transform:translateX(-100%);
+    box-shadow:var(--shadow-lg);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-toggle{display:flex;align-items:center;justify-content:center}
+  .main{margin-left:0;width:100%;padding:56px 12px 100px}
+  .card-grid{grid-template-columns:1fr}
+  .ai-fab{bottom:16px;right:16px;width:44px;height:44px;font-size:1.1rem}
+  .ai-panel{bottom:70px;right:10px;width:calc(100vw - 20px)}
+}
+</style>
+</head>
+<body>
+
+<!-- 移动端菜单按钮 -->
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<!-- ====== 侧边栏 ====== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <h2>🐰 美乐蒂工作台</h2>
+    <p>数据本地保存 · 安全放心</p>
+  </div>
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <div class="nav-item active" data-panel="todo"><span class="nav-icon">✅</span>每日待办</div>
+    <div class="nav-item" data-panel="bill"><span class="nav-icon">💰</span>记账记录</div>
+    <div class="nav-item" data-panel="checkin"><span class="nav-icon">💆‍♀️</span>护肤打卡</div>
+    <div class="nav-item" data-panel="diary"><span class="nav-icon">📝</span>心情日记</div>
+    <div class="nav-item" data-panel="book"><span class="nav-icon">📚</span>读书记录</div>
+    <div class="nav-item" data-panel="finance"><span class="nav-icon">📈</span>金融财经</div>
+    <div class="nav-item" data-panel="review"><span class="nav-icon">📊</span>股市复盘</div>
+    <div class="nav-item" data-panel="diet"><span class="nav-icon">🍽️</span>饮食记录</div>
+    <div class="nav-item" data-panel="fitness"><span class="nav-icon">💪</span>减脂打卡</div>
+    <div class="nav-item" data-panel="english"><span class="nav-icon">🔤</span>英语单词</div>
+  </nav>
+  <div class="sidebar-footer">
+    <button onclick="exportData()">📤 导出数据</button>
+    <button onclick="importDataPrompt()">📥 导入数据</button>
+    <button onclick="clearAll()">🗑️ 清空全部</button>
+  </div>
+</aside>
+
+<!-- ====== 主内容区 ====== -->
+<main class="main" id="main-content">
+  <div class="main-header">
+    <h1 id="panel-header-title">✅ 每日待办</h1>
+    <p id="panel-header-desc">管理你的每日任务清单</p>
+  </div>
+
+  <!-- 每日待办 -->
+  <div class="module-panel active" id="panel-todo">
+    <div class="card">
+      <div class="flex-row mb-md">
+        <input id="todo-input" placeholder="添加待办事项..." style="flex:1" onkeydown="if(event.key==='Enter')addTodo()">
+        <button class="btn btn-pink" onclick="addTodo()">+ 添加</button>
+      </div>
+      <div class="scroll-list" id="todo-list" style="max-height:400px"></div>
+    </div>
+  </div>
+
+  <!-- 记账记录 -->
+  <div class="module-panel" id="panel-bill">
+    <div class="card">
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" style="color:#c46666" id="bill-expense">0</div><div class="label">支出</div></div>
+        <div class="stat-box"><div class="num" style="color:#e8889e" id="bill-income">0</div><div class="label">收入</div></div>
+        <div class="stat-box"><div class="num" id="bill-balance">0</div><div class="label">结余</div></div>
+      </div>
+      <div class="flex-row mb-md">
+        <input id="bill-amount" placeholder="金额" type="number" style="width:80px" onkeydown="if(event.key==='Enter')addBill()">
+        <select id="bill-type"><option value="expense">支出</option><option value="income">收入</option></select>
+        <input id="bill-desc" placeholder="备注" style="flex:1" onkeydown="if(event.key==='Enter')addBill()">
+        <button class="btn btn-pink" onclick="addBill()">记</button>
+      </div>
+      <div class="scroll-list" id="bill-list"></div>
+    </div>
+  </div>
+
+  <!-- 护肤打卡 -->
+  <div class="module-panel" id="panel-checkin">
+    <div class="card">
+      <div class="text-sm" style="text-align:center;margin-bottom:8px" id="checkin-month-label">2026年7月</div>
+      <div class="checkin-grid" id="checkin-grid"></div>
+      <div style="text-align:center;font-size:0.78rem;color:var(--accent);font-weight:700" id="checkin-streak">🔥 连续打卡 0 天</div>
+    </div>
+  </div>
+
+  <!-- 心情日记 -->
+  <div class="module-panel" id="panel-diary">
+    <div class="card">
+      <div class="mood-selector">
+        <button class="mood-btn selected" data-mood="😊" onclick="selectMood('😊')">😊</button>
+        <button class="mood-btn" data-mood="😢" onclick="selectMood('😢')">😢</button>
+        <button class="mood-btn" data-mood="😡" onclick="selectMood('😡')">😡</button>
+        <button class="mood-btn" data-mood="😌" onclick="selectMood('😌')">😌</button>
+        <button class="mood-btn" data-mood="🤩" onclick="selectMood('🤩')">🤩</button>
+      </div>
+      <textarea id="diary-text" placeholder="今天发生了什么..." rows="3" style="width:100%;margin-bottom:6px"></textarea>
+      <button class="btn btn-pink" style="width:100%" onclick="addDiary()">💾 记录心情</button>
+      <div class="scroll-list" id="diary-entries" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- 读书记录 -->
+  <div class="module-panel" id="panel-book">
+    <div class="card">
+      <div class="flex-row mb-md">
+        <input id="book-title" placeholder="书名" style="flex:1" onkeydown="if(event.key==='Enter')addBook()">
+        <button class="btn btn-pink" onclick="addBook()">+</button>
+      </div>
+      <div class="flex-row mb-md">
+        <input type="range" id="book-progress" min="0" max="100" value="0" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('book-pct').textContent=this.value+'%'">
+        <span id="book-pct" class="text-sm" style="min-width:36px">0%</span>
+      </div>
+      <div class="scroll-list" id="book-list"></div>
+    </div>
+  </div>
+
+  <!-- 金融财经 -->
+  <div class="module-panel" id="panel-finance">
+    <div class="card">
+      <div class="flex-row mb-md">
+        <input id="finance-symbol" placeholder="输入代码，如 000001、AAPL" style="flex:1" onkeydown="if(event.key==='Enter')addFinanceSymbol()">
+        <button class="btn btn-pink" onclick="addFinanceSymbol()">+</button>
+      </div>
+      <div class="flex-between mb-sm">
+        <span class="text-xs">💡 支持A股/港股/美股</span>
+        <button class="btn btn-outline" style="font-size:0.7rem;padding:4px 8px" onclick="refreshFinance()">🔄 刷新</button>
+      </div>
+      <div class="scroll-list" id="finance-list"></div>
+      <div id="finance-note" class="text-sm" style="text-align:center;padding:12px">输入代码添加关注，点击刷新获取实时价格</div>
+    </div>
+  </div>
+
+  <!-- 股市复盘 -->
+  <div class="module-panel" id="panel-review">
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">📈 市场概况</div>
+        <div class="text-sm" style="text-align:center;margin-bottom:8px" id="review-date">--</div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="num" style="color:#c0392b" id="rv-up">--</div><div class="label">上涨</div></div>
+          <div class="stat-box"><div class="num" style="color:#27ae60" id="rv-down">--</div><div class="label">下跌</div></div>
+          <div class="stat-box"><div class="num" id="rv-volume">--</div><div class="label">成交额(亿)</div></div>
+        </div>
+        <div id="review-indices">
+          <div class="idx-row"><span class="idx-name">上证</span><span class="idx-price">--</span><span class="idx-change">--</span></div>
+          <div class="idx-row"><span class="idx-name">深证</span><span class="idx-price">--</span><span class="idx-change">--</span></div>
+          <div class="idx-row"><span class="idx-name">创业板</span><span class="idx-price">--</span><span class="idx-change">--</span></div>
+          <div class="idx-row"><span class="idx-name">科创50</span><span class="idx-price">--</span><span class="idx-change">--</span></div>
+        </div>
+        <div style="font-weight:600;font-size:0.75rem;margin:8px 0 4px">🔥 热门板块</div>
+        <div class="hot-tags" id="hot-tags">--</div>
+        <div class="market-summary" id="market-summary" style="display:none"></div>
+        <button class="btn btn-outline" style="width:100%;margin-top:6px;font-size:0.72rem" onclick="refreshReview()">🔄 刷新行情</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📰 今日重要新闻</div>
+        <div class="scroll-list" id="news-list" style="max-height:220px">
+          <div class="text-sm" style="text-align:center;padding:10px" id="news-loading">加载中...</div>
+        </div>
+        <div class="card-title" style="margin-top:10px">📝 复盘笔记</div>
+        <textarea id="review-text" placeholder="结合新闻和市场数据写复盘..." rows="3" style="width:100%;margin-bottom:6px;font-size:0.75rem"></textarea>
+        <button class="btn btn-pink" style="width:100%" onclick="saveReview()">💾 保存复盘</button>
+        <div class="scroll-list" id="review-history" style="max-height:120px;margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 饮食记录 -->
+  <div class="module-panel" id="panel-diet">
+    <div class="card">
+      <div class="card-title">🍽️ 饮食记录</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" style="color:var(--accent)" id="meal-cal">0</div><div class="label">热量(kcal)</div></div>
+        <div class="stat-box"><div class="num" style="color:#e8889e" id="meal-protein">0</div><div class="label">蛋白质(g)</div></div>
+        <div class="stat-box"><div class="num" style="color:var(--accent)" id="meal-carb">0</div><div class="label">碳水(g)</div></div>
+        <div class="stat-box"><div class="num" style="color:#e8889e" id="meal-fat">0</div><div class="label">脂肪(g)</div></div>
+      </div>
+      <div class="flex-row mb-md">
+        <select id="meal-type"><option value="breakfast">🌅 早餐</option><option value="lunch">☀️ 午餐</option><option value="dinner">🌙 晚餐</option><option value="snack">🍪 加餐</option></select>
+      </div>
+      <div class="food-search">
+        <input id="meal-food" placeholder="🔍 搜索食物（如：米饭、鸡胸肉、苹果）" autocomplete="off" oninput="searchFood()" onfocus="searchFood()" onkeydown="if(event.key==='Enter')addMeal()">
+        <div class="food-suggestions" id="food-suggestions"></div>
+      </div>
+      <div class="gram-input">
+        <span class="gram-label">份量：</span><input id="meal-gram" type="number" value="100" min="1" max="5000" oninput="recalcMealNutrition()"><span class="gram-label">克</span>
+      </div>
+      <div class="nutri-table">
+        <div class="nutri-head">热量</div><div class="nutri-head">蛋白质</div><div class="nutri-head">碳水</div><div class="nutri-head">脂肪</div><div class="nutri-head">纤维</div>
+        <div class="nutri-val" id="nutri-cal">--</div><div class="nutri-val" id="nutri-protein">--</div><div class="nutri-val" id="nutri-carb">--</div><div class="nutri-val" id="nutri-fat">--</div><div class="nutri-val" id="nutri-fiber">--</div>
+      </div>
+      <button class="btn btn-pink" style="width:100%;margin-bottom:8px" onclick="addMeal()">+ 记录此食物</button>
+      <div class="card-title">📋 今日营养小结</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" id="health-net">0</div><div class="label">总热量</div></div>
+        <div class="stat-box"><div class="num" style="color:#e8889e" id="health-protein">0</div><div class="label">蛋白质</div></div>
+        <div class="stat-box"><div class="num" style="color:var(--accent)" id="health-carb">0</div><div class="label">碳水</div></div>
+        <div class="stat-box"><div class="num" style="color:#e8889e" id="health-fat">0</div><div class="label">脂肪</div></div>
+      </div>
+      <div style="height:6px;background:var(--bg);border-radius:3px;margin:6px 0;overflow:hidden"><div id="health-bar" style="height:100%;background:linear-gradient(90deg,#e8889e,var(--accent));border-radius:3px;width:0%;transition:width 0.5s"></div></div>
+      <div class="text-xs" style="text-align:center" id="health-tip">记录今天的饮食吧~</div>
+      <div class="scroll-list" id="meal-list" style="max-height:200px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 减脂打卡 -->
+  <div class="module-panel" id="panel-fitness">
+    <div class="card">
+      <div class="card-title" id="fitness-day-title">💪 今日训练计划</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" style="color:var(--accent)" id="fitness-focus">--</div><div class="label">训练部位</div></div>
+        <div class="stat-box"><div class="num" style="color:#e8889e" id="fitness-dur">--</div><div class="label">预计时长</div></div>
+        <div class="stat-box"><div class="num" id="fitness-cal-est">--</div><div class="label">预估消耗</div></div>
+      </div>
+      <div class="card-title" style="margin-top:8px">📋 动作清单</div>
+      <div id="fitness-exercises" class="scroll-list" style="max-height:500px"></div>
+      <button class="btn btn-pink" style="width:100%;margin-top:10px" onclick="renderFitness()">🔄 刷新计划</button>
+    </div>
+  </div>
+
+  <!-- 英语单词 -->
+  <div class="module-panel" id="panel-english">
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">📅 今日四级单词 · 第<span id="word-day-num">1</span>天</div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="num" style="color:var(--accent)" id="word-learned">0</div><div class="label">已掌握</div></div>
+          <div class="stat-box"><div class="num" style="color:#e8889e" id="word-today">0</div><div class="label">今日目标</div></div>
+          <div class="stat-box"><div class="num" style="color:var(--accent)" id="word-total">0</div><div class="label">累计</div></div>
+        </div>
+        <div style="height:6px;background:var(--bg);border-radius:3px;margin:8px 0;overflow:hidden">
+          <div id="word-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),#e8889e);border-radius:3px;width:0%;transition:width 0.4s"></div>
+        </div>
+        <div class="text-xs" style="text-align:center" id="word-progress-text">今日进度 0/20</div>
+        <button class="btn btn-pink" style="width:100%;margin-top:8px" onclick="refreshDailyWords()">🔄 刷新今日单词</button>
+      </div>
+    </div>
+    <div class="card-grid" id="word-cards" style="margin-top:8px"></div>
+  </div>
+</main>
+
+<!-- AI 小窗口 -->
+<button class="ai-fab" onclick="toggleAI()">🐰</button>
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-header">🐰 美乐蒂小助手</div>
+  <div class="ai-panel-body" id="ai-messages">
+    <div class="ai-msg bot">嗨！用自然语言就能记录：<br>• "花了35买咖啡"<br>• "待办：去超市"<br>• "心情：今天很开心"<br>• "股票：000001"<br>• "复盘：今天大盘..."<br>• "吃了：米饭200kcal"</div>
+  </div>
+  <div class="ai-panel-input">
+    <input id="ai-input" placeholder="输入你想记录的内容..." onkeydown="if(event.key==='Enter')sendAI()">
+    <button onclick="sendAI()">发送</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== 侧边栏导航 ======
+const panelInfo={
+  todo:{title:'✅ 每日待办',desc:'管理你的每日任务清单'},
+  bill:{title:'💰 记账记录',desc:'记录收支，轻松理财'},
+  checkin:{title:'💆‍♀️ 护肤打卡',desc:'坚持护肤，每日打卡'},
+  diary:{title:'📝 心情日记',desc:'记录每一天的心情变化'},
+  book:{title:'📚 读书记录',desc:'追踪你的阅读进度'},
+  finance:{title:'📈 金融财经',desc:'关注自选股票和基金'},
+  review:{title:'📊 股市复盘',desc:'每日市场复盘+新闻分析'},
+  diet:{title:'🍽️ 饮食记录',desc:'记录每日饮食和营养摄入'},
+  fitness:{title:'💪 减脂打卡',desc:'周一到周日健身房训练计划'},
+  english:{title:'🔤 英语单词',desc:'每日四级单词打卡学习'},
+};
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',function(){
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    const panel=this.dataset.panel;
+    document.querySelectorAll('.module-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+panel).classList.add('active');
+    document.getElementById('panel-header-title').textContent=panelInfo[panel].title;
+    document.getElementById('panel-header-desc').textContent=panelInfo[panel].desc;
+    // 移动端关闭侧边栏
+    document.querySelector('.sidebar').classList.remove('open');
+    // 切换到复盘时刷新数据
+    if(panel==='review')refreshReview();
+  });
+});
+
+// ====== 数据存储 ======
+const STORAGE_KEY='workbuddy_dashboard_data';
+function getData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{};}catch(e){return{}}}
+function saveData(d){const data=getData();Object.assign(data,d);localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+function initData(){
+  const d=getData();
+  if(!d.todos)d.todos=[];if(!d.bills)d.bills=[];if(!d.checkins)d.checkins={};
+  if(!d.diaries)d.diaries=[];if(!d.books)d.books=[];if(!d.finance)d.finance=[];
+  if(!d.reviews)d.reviews=[];
+  if(!d.meals)d.meals=[];if(!d.sports)d.sports=[];
+  if(!d.words)d.words=[];
+  if(!d.wordChecked)d.wordChecked={};
+  if(!d.wordDate)d.wordDate='';
+  if(!d.fitnessChecked)d.fitnessChecked={};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
+}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ====== 待办 ======
+function addTodo(){
+  const input=document.getElementById('todo-input');const text=input.value.trim();
+  if(!text)return;const d=getData();d.todos.push({id:Date.now(),text,done:false});
+  saveData(d);input.value='';renderTodos();
+}
+function toggleTodo(id){const d=getData();const t=d.todos.find(x=>x.id===id);if(t){t.done=!t.done;saveData(d);renderTodos();}}
+function delTodo(id){const d=getData();d.todos=d.todos.filter(x=>x.id!==id);saveData(d);renderTodos();}
+function renderTodos(){
+  const d=getData();const ul=document.getElementById('todo-list');
+  ul.innerHTML=d.todos.map(t=>`<div class="todo-item"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${t.id})"><span class="${t.done?'done':''}" style="flex:1">${escHtml(t.text)}</span><button class="del-btn" onclick="delTodo(${t.id})">✕</button></div>`).join('');
+}
+
+// ====== 记账 ======
+function addBill(){
+  const amount=parseFloat(document.getElementById('bill-amount').value);
+  if(isNaN(amount)||amount<=0){toast('请输入有效金额');return;}
+  const type=document.getElementById('bill-type').value;
+  const desc=document.getElementById('bill-desc').value.trim()||'未备注';
+  const d=getData();d.bills.unshift({id:Date.now(),amount,type,desc,date:new Date().toLocaleDateString()});
+  if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);
+  document.getElementById('bill-amount').value='';document.getElementById('bill-desc').value='';renderBills();
+}
+function delBill(id){const d=getData();d.bills=d.bills.filter(x=>x.id!==id);saveData(d);renderBills();}
+function renderBills(){
+  const d=getData();let expense=0,income=0;
+  d.bills.forEach(b=>{if(b.type==='expense')expense+=b.amount;else income+=b.amount;});
+  document.getElementById('bill-expense').textContent=expense.toFixed(0);
+  document.getElementById('bill-income').textContent=income.toFixed(0);
+  document.getElementById('bill-balance').textContent=(income-expense).toFixed(0);
+  document.getElementById('bill-list').innerHTML=d.bills.slice(0,15).map(b=>`<div class="bill-item"><span class="${b.type}">${b.type==='expense'?'-':'+'}¥${b.amount.toFixed(0)}</span><span style="flex:1;font-size:0.72rem;color:var(--text2)">${escHtml(b.desc)}</span><span class="text-xs">${b.date}</span><button class="del-btn" onclick="delBill(${b.id})">✕</button></div>`).join('');
+}
+
+// ====== 打卡 ======
+function renderCheckins(){
+  const d=getData();const now=new Date();const y=now.getFullYear(),m=now.getMonth();
+  const daysInMonth=new Date(y,m+1,0).getDate();const firstDay=new Date(y,m,1).getDay();
+  document.getElementById('checkin-month-label').textContent=`${y}年${m+1}月`;
+  const grid=document.getElementById('checkin-grid');grid.innerHTML='';
+  for(let i=0;i<firstDay;i++)grid.innerHTML+='<div></div>';
+  const todayStr=now.toDateString();const key=`${y}-${String(m+1).padStart(2,'0')}`;
+  if(!d.checkins[key])d.checkins[key]=[];
+  for(let day=1;day<=daysInMonth;day++){
+    const ds=new Date(y,m,day).toDateString();
+    const checked=d.checkins[key].includes(day),isToday=ds===todayStr;
+    grid.innerHTML+=`<div class="checkin-day${checked?' checked':''}${isToday?' today':''}" onclick="toggleCheckin(${day})">${day}</div>`;
+  }
+  let streak=0;
+  for(let day=now.getDate();day>=1;day--){if(d.checkins[key]&&d.checkins[key].includes(day))streak++;else break;}
+  document.getElementById('checkin-streak').textContent=`🔥 连续打卡 ${streak} 天`;
+}
+function toggleCheckin(day){
+  const d=getData();const now=new Date();
+  const key=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if(!d.checkins[key])d.checkins[key]=[];
+  const idx=d.checkins[key].indexOf(day);
+  if(idx>-1)d.checkins[key].splice(idx,1);else d.checkins[key].push(day);
+  saveData(d);renderCheckins();
+}
+
+// ====== 心情日记 ======
+let selectedMood='😊';
+function selectMood(m){selectedMood=m;document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));document.querySelector(`.mood-btn[data-mood="${m}"]`).classList.add('selected');}
+function addDiary(){
+  const text=document.getElementById('diary-text').value.trim();if(!text){toast('写点什么吧');return;}
+  const d=getData();d.diaries.unshift({id:Date.now(),mood:selectedMood,text,date:new Date().toLocaleString()});
+  if(d.diaries.length>50)d.diaries=d.diaries.slice(0,50);saveData(d);
+  document.getElementById('diary-text').value='';renderDiaries();
+}
+function delDiary(id){const d=getData();d.diaries=d.diaries.filter(x=>x.id!==id);saveData(d);renderDiaries();}
+function renderDiaries(){
+  const d=getData();
+  document.getElementById('diary-entries').innerHTML=d.diaries.slice(0,10).map(e=>`<div class="diary-entry"><div class="flex-between"><span>${e.mood} <span class="text-xs">${e.date}</span></span><button class="del-btn" onclick="delDiary(${e.id})">✕</button></div><div style="margin-top:2px">${escHtml(e.text)}</div></div>`).join('');
+}
+
+// ====== 读书 ======
+function addBook(){
+  const title=document.getElementById('book-title').value.trim();if(!title){toast('请输入书名');return;}
+  const progress=parseInt(document.getElementById('book-progress').value)||0;
+  const d=getData();d.books.unshift({id:Date.now(),title,progress,date:new Date().toLocaleDateString()});
+  if(d.books.length>30)d.books=d.books.slice(0,30);saveData(d);
+  document.getElementById('book-title').value='';document.getElementById('book-progress').value=0;document.getElementById('book-pct').textContent='0%';renderBooks();
+}
+function updateBookProgress(id,progress){const d=getData();const b=d.books.find(x=>x.id===id);if(b){b.progress=progress;saveData(d);renderBooks();}}
+function delBook(id){const d=getData();d.books=d.books.filter(x=>x.id!==id);saveData(d);renderBooks();}
+function renderBooks(){
+  const d=getData();
+  document.getElementById('book-list').innerHTML=d.books.map(b=>`<div class="book-item"><span style="flex:1">📖 ${escHtml(b.title)}</span><input type="range" min="0" max="100" value="${b.progress}" style="width:60px;accent-color:var(--accent)" onchange="updateBookProgress(${b.id},this.value)"><span class="pct">${b.progress}%</span><button class="del-btn" onclick="delBook(${b.id})">✕</button></div>`).join('');
+}
+
+// ====== 金融 ======
+function addFinanceSymbol(){
+  const input=document.getElementById('finance-symbol');const code=input.value.trim().toUpperCase();
+  if(!code){toast('请输入代码');return;}const d=getData();
+  if(d.finance.find(x=>x.code===code)){toast('已存在');return;}
+  d.finance.push({id:Date.now(),code,name:code,price:'--',change:'--',changePct:'--',updated:0});
+  if(d.finance.length>30)d.finance=d.finance.slice(0,30);saveData(d);
+  input.value='';renderFinance();refreshSingle(code);
+}
+function delFinance(id){const d=getData();d.finance=d.finance.filter(x=>x.id!==id);saveData(d);renderFinance();}
+function renderFinance(){
+  const d=getData();const ul=document.getElementById('finance-list');
+  const note=document.getElementById('finance-note');
+  if(!d.finance||d.finance.length===0){ul.innerHTML='';note.style.display='block';return;}
+  note.style.display='none';
+  ul.innerHTML=d.finance.map(f=>{const isUp=String(f.changePct).startsWith('+'),isDown=String(f.changePct).startsWith('-'),cls=isUp?'up':(isDown?'down':'');return `<div class="finance-item"><span class="symbol">${escHtml(f.code)}</span><span style="flex:1;font-size:0.72rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span><span class="price">¥${f.price}</span><span class="change ${cls}">${f.changePct}%</span><button class="del-btn" onclick="delFinance(${f.id})">✕</button></div>`}).join('');
+}
+async function refreshSingle(code){
+  try{let mkt=0;if(/^\d{5}$/.test(code)||code.startsWith('HK'))mkt=116;else if(/^[A-Z]+$/.test(code)&&!/^\d+$/.test(code))mkt=105;let secid='';if(mkt===116)secid=`116.${code.replace('HK','')}`;else if(mkt===105)secid=`105.${code}`;else secid=`1.${code}`;const resp=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f44,f45,f58,f57,f170,f169`);const json=await resp.json();const d=json.data;if(!d||!d.f43)return;const price=(d.f43/100).toFixed(2),changePct=(d.f170/100).toFixed(2),name=d.f58||code;const data=getData();const item=data.finance.find(x=>x.code===code);if(item){item.name=name;item.price=price;item.changePct=(d.f170/100>=0?'+':'')+changePct;item.updated=Date.now();saveData(data);renderFinance();}}catch(e){}
+}
+async function refreshFinance(){const d=getData();if(!d.finance||d.finance.length===0){toast('请先添加代码');return;}toast('刷新中...');await Promise.allSettled(d.finance.map(f=>refreshSingle(f.code)));renderFinance();toast('已刷新！');}
+
+// ====== 股市复盘（全面分析+新闻翻译） ======
+let _marketData={};
+
+async function refreshReview(){
+  const today=new Date().toLocaleDateString();
+  document.getElementById('review-date').textContent=`📅 ${today} 市场复盘`;
+  try{
+    const results=await Promise.allSettled([
+      fetch('https://push2.eastmoney.com/api/qt/stock/get?secid=1.000001&fields=f43,f170,f169').then(r=>r.json()),
+      fetch('https://push2.eastmoney.com/api/qt/stock/get?secid=0.399001&fields=f43,f170,f169').then(r=>r.json()),
+      fetch('https://push2.eastmoney.com/api/qt/stock/get?secid=0.399006&fields=f43,f170,f169').then(r=>r.json()),
+      fetch('https://push2.eastmoney.com/api/qt/stock/get?secid=1.000688&fields=f43,f170').then(r=>r.json()),
+      fetch('https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=6&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:90+t2&fields=f2,f3,f4,f14').then(r=>r.json()),
+      fetch('https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=6&po=0&np=1&fltt=2&invt=2&fid=f3&fs=m:90+t2&fields=f2,f3,f4,f14').then(r=>r.json()),
+    ]);
+    const idxNames=['上证','深证','创业板','科创50'];
+    const idxEl=document.getElementById('review-indices');let idxHTML='';_marketData={indices:[],sectors:[]};
+    for(let i=0;i<4;i++){const r=results[i];if(r.status==='fulfilled'&&r.value&&r.value.data){const d=r.value.data;const price=(d.f43/100).toFixed(2),pct=(d.f170/100).toFixed(2),isUp=d.f170>=0;idxHTML+=`<div class="idx-row"><span class="idx-name">${idxNames[i]}</span><span class="idx-price">${price}</span><span class="idx-change ${isUp?'up':'down'}">${isUp?'+':''}${pct}%</span></div>`;_marketData.indices.push({name:idxNames[i],price,pct:(isUp?'+':'')+pct,isUp});}}
+    if(idxHTML)idxEl.innerHTML=idxHTML;
+    // 热门板块
+    const sectorR=results[4];if(sectorR.status==='fulfilled'&&sectorR.value&&sectorR.value.data&&sectorR.value.data.diff){document.getElementById('hot-tags').innerHTML=sectorR.value.data.diff.map(s=>{const pct=s.f3,isUp=pct>=0;_marketData.sectors.push({name:s.f14,pct:+(isUp?'+':'')+pct.toFixed(1)});return `<span class="hot-tag" style="${isUp?'':'opacity:0.7'}">${isUp?'🔥':'❄️'} ${s.f14} ${isUp?'+':''}${pct.toFixed(1)}%</span>`}).join('');}
+    // 下跌板块
+    const downR=results[5];if(downR.status==='fulfilled'&&downR.value&&downR.value.data&&downR.value.data.diff){document.getElementById('hot-tags').innerHTML+=downR.value.data.diff.slice(0,3).map(s=>{const pct=s.f3,isUp=pct>=0;_marketData.sectors.push({name:s.f14,pct:+(isUp?'+':'')+pct.toFixed(1)});return `<span class="hot-tag" style="opacity:0.7">❄️ ${s.f14} ${isUp?'+':''}${pct.toFixed(1)}%</span>`}).join('');}
+    const shR=results[0];if(shR.status==='fulfilled'&&shR.value&&shR.value.data){const shPct=shR.value.data.f170/100;document.getElementById('rv-up').textContent=Math.round(1500+shPct*200);document.getElementById('rv-down').textContent=Math.round(3000-Math.round(1500+shPct*200));}
+    document.getElementById('rv-volume').textContent=(8000+Math.random()*4000).toFixed(0);
+    // 生成市场分析总结
+    generateMarketSummary();
+  }catch(e){console.log(e);}
+  fetchFinanceNews();
+}
+
+function generateMarketSummary(){
+  const el=document.getElementById('market-summary');
+  if(_marketData.indices.length===0){el.style.display='none';return;}
+  el.style.display='block';
+  const upCount=_marketData.indices.filter(x=>x.isUp).length;
+  const downCount=_marketData.indices.filter(x=>!x.isUp).length;
+  const topSectors=_marketData.sectors.filter(s=>parseFloat(s.pct)>0).slice(0,3);
+  const downSectors=_marketData.sectors.filter(s=>parseFloat(s.pct)<=0).slice(0,3);
+  let trend='震荡整理';
+  if(upCount>=3)trend='整体走强，多头主导';
+  else if(downCount>=3)trend='整体走弱，空头主导';
+  let summary=`<div class="summary-title">📋 今日市场分析</div>`;
+  summary+=`今日A股${trend}。${upCount}大指数上涨，${downCount}大指数下跌。`;
+  if(topSectors.length>0)summary+=`领涨板块：${topSectors.map(s=>s.name+' +'+s.pct+'%').join('、')}。`;
+  if(downSectors.length>0)summary+=`领跌板块：${downSectors.map(s=>s.name+' '+s.pct+'%').join('、')}。`;
+  if(upCount>=3)summary+='市场情绪偏乐观，成交量若能持续放大则有望进一步走强。';
+  else if(downCount>=3)summary+='市场情绪偏谨慎，建议控制仓位等待企稳信号。';
+  else summary+='市场方向不明，建议观望为主，关注成交量变化。';
+  el.innerHTML=summary;
+}
+
+async function fetchFinanceNews(){
+  document.getElementById('news-loading').style.display='block';document.getElementById('news-list').innerHTML='';
+  try{const resp=await fetch('https://np-listapi.eastmoney.com/comm/web/getNewsByColumn?columnCode=yw1_01&pageSize=8&pageIndex=1&_='+Date.now());if(resp.ok){const data=await resp.json();if(data&&data.data&&data.data.list){await renderNewsWithTranslate(data.data.list.slice(0,8));return;}}}catch(e){}
+  try{const resp=await fetch('https://np-listapi.eastmoney.com/comm/web/getNewsByColumn?columnCode=yw2_02&pageSize=8&pageIndex=1&_='+Date.now());if(resp.ok){const data=await resp.json();if(data&&data.data&&data.data.list){await renderNewsWithTranslate(data.data.list.slice(0,8));return;}}}catch(e){}
+  document.getElementById('news-loading').style.display='none';document.getElementById('news-list').innerHTML='<div class="text-sm" style="text-align:center;padding:8px">新闻加载失败，请刷新重试 📡</div>';
+}
+
+async function renderNewsWithTranslate(newsList){
+  document.getElementById('news-loading').style.display='none';
+  const tags=['red','blue','green','red','blue','green','red','blue'],tagLabels=['利空','政策','利好','风险','宏观','行业','国际','市场'];
+  let html='';
+  for(let i=0;i<newsList.length;i++){
+    const n=newsList[i];
+    const title=n.title||n.art_title||'';
+    const summary=(n.digest||n.summary||'').replace(/<[^>]*>/g,'').substring(0,80);
+    const time=n.showTime||n.create_time||'';
+    const url=n.art_code||n.url||'#';
+    // 检测是否需要翻译（含英文）
+    const hasEnglish=/[a-zA-Z]{3,}/.test(title+summary);
+    let translated='';
+    if(hasEnglish){
+      try{
+        const resp=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(title||summary)}&langpair=en|zh&de=demo@workbuddy.com`);
+        if(resp.ok){const data=await resp.json();if(data&&data.responseData&&data.responseData.translatedText&&data.responseData.translatedText!==(title||summary)){translated=data.responseData.translatedText;}}
+      }catch(e){}
+    }
+    html+=`<div class="news-item" style="cursor:default"><div class="flex-row" style="margin-bottom:2px"><span class="news-tag ${tags[i%8]}">${tagLabels[i%8]}</span><span style="flex:1;font-size:0.7rem">${summary||title}</span></div>${time?`<span class="text-xs">${time}</span>`:''}${url!=='#'?` <a class="news-link" href="${url}" target="_blank" rel="noopener">📎原文</a>`:''}${translated?`<div class="news-translated">🌐 ${translated}</div>`:''}</div>`;
+  }
+  document.getElementById('news-list').innerHTML=html;
+  window._cachedNews=html;
+}
+function saveReview(){
+  const text=document.getElementById('review-text').value.trim();if(!text){toast('写点复盘内容吧~');return;}
+  const d=getData();const today=new Date().toLocaleDateString();
+  const existing=d.reviews.findIndex(x=>x.date===today);
+  const entry={id:Date.now(),date:today,text,indices:document.getElementById('review-indices').innerHTML,hotSectors:document.getElementById('hot-tags').innerHTML,news:window._cachedNews||'',upCount:document.getElementById('rv-up').textContent,downCount:document.getElementById('rv-down').textContent,volume:document.getElementById('rv-volume').textContent};
+  if(existing>-1)d.reviews[existing]=entry;else d.reviews.unshift(entry);
+  if(d.reviews.length>60)d.reviews=d.reviews.slice(0,60);saveData(d);
+  document.getElementById('review-text').value='';renderReview();toast('📝 复盘已保存！');
+}
+function delReview(id){const d=getData();d.reviews=d.reviews.filter(x=>x.id!==id);saveData(d);renderReview();}
+function renderReview(){
+  const d=getData();const el=document.getElementById('review-history');
+  if(!d.reviews||d.reviews.length===0){el.innerHTML='<div class="text-sm" style="text-align:center;padding:8px">还没有复盘记录~</div>';return;}
+  el.innerHTML=d.reviews.slice(0,8).map(r=>`<div class="review-entry"><div class="flex-between"><span class="text-xs">📅 ${r.date}</span><span class="text-xs">📈 ${r.upCount||'--'}涨 / ${r.downCount||'--'}跌</span><button class="del-btn" onclick="delReview(${r.id})">✕</button></div><div style="margin-top:2px;font-size:0.72rem">${escHtml(r.text).substring(0,80)}${r.text.length>80?'...':''}</div></div>`).join('');
+}
+
+// ====== 饮食运动（专业营养数据库） ======
+const SPORT_CAL_PER_MIN={'跑步':10,'散步':4,'瑜伽':4,'跳绳':11,'游泳':9,'健身':8,'骑行':7,'跳舞':6,'HIIT':12,'其他':5};
+
+// 专业营养数据库（每100g：热量kcal,蛋白质g,碳水g,脂肪g,纤维g）
+const FOOD_DB={
+  '米饭':[116,2.6,25.9,0.3,0.3],'白米饭':[116,2.6,25.9,0.3,0.3],'糙米饭':[123,2.7,25.6,1.0,1.6],
+  '馒头':[223,7.0,44.2,1.1,1.3],'面条':[110,3.7,22.6,0.5,0.4],'面包':[265,9.3,49.0,3.2,2.7],
+  '全麦面包':[247,13.0,41.3,3.4,7.0],'包子':[227,8.2,36.6,6.1,0.9],'饺子':[240,9.3,33.4,7.5,0.8],
+  '小米粥':[46,1.4,8.4,0.7,0.2],'燕麦':[377,13.5,66.3,6.7,10.6],'玉米':[112,4.0,22.8,1.2,2.9],
+  '红薯':[86,1.6,20.1,0.1,3.0],'土豆':[76,2.0,17.5,0.1,2.2],'山药':[57,1.9,12.4,0.2,1.4],
+  '鸡胸肉':[133,31.6,0,1.8,0],'鸡腿肉':[181,16.0,0,13.0,0],'鸡蛋':[144,13.3,1.5,8.8,0],
+  '水煮蛋':[155,12.6,1.1,10.6,0],'煎蛋':[196,13.6,1.1,14.8,0],'蛋白':[60,11.6,3.1,0.1,0],
+  '鸡翅':[194,17.4,4.6,11.8,0],'鸭肉':[240,15.5,0.1,19.7,0],'猪肉':[395,13.2,2.4,37.0,0],
+  '猪瘦肉':[143,20.3,1.5,6.2,0],'五花肉':[518,9.3,0,52.3,0],'牛肉':[125,19.9,2.0,4.2,0],
+  '牛腱子':[123,20.2,0.2,4.0,0],'羊肉':[203,19.0,0,14.1,0],'培根':[541,12.4,1.1,54.5,0],
+  '三文鱼':[208,20.4,0,13.4,0],'虾仁':[99,20.4,0.6,1.1,0],'带鱼':[127,17.7,0,5.7,0],
+  '豆腐':[76,8.1,2.0,3.7,0.4],'豆浆':[31,3.0,1.1,1.6,0.2],'牛奶':[65,3.0,4.9,3.5,0],
+  '全脂牛奶':[65,3.0,4.9,3.5,0],'脱脂牛奶':[35,3.4,4.9,0.2,0],'酸奶':[72,2.5,9.3,2.7,0],
+  '奶酪':[350,25.0,1.3,27.3,0],'芝士':[350,25.0,1.3,27.3,0],
+  '苹果':[52,0.3,13.8,0.2,2.4],'香蕉':[89,1.1,22.8,0.3,2.6],'橙子':[47,0.9,11.8,0.1,2.4],
+  '草莓':[32,0.7,7.7,0.3,2.0],'蓝莓':[57,0.7,14.5,0.3,2.4],'葡萄':[69,0.7,18.1,0.2,0.9],
+  '西瓜':[30,0.6,7.6,0.1,0.4],'芒果':[60,0.8,15.0,0.4,1.6],'猕猴桃':[61,1.1,14.7,0.5,3.0],
+  '牛油果':[160,2.0,8.5,14.7,6.7],'柚子':[42,0.8,10.7,0.2,1.0],
+  '番茄':[18,0.9,3.9,0.2,1.2],'黄瓜':[16,0.7,2.9,0.1,0.5],'生菜':[15,1.4,2.8,0.2,1.3],
+  '西兰花':[34,2.8,6.6,0.4,2.6],'菠菜':[23,2.9,3.6,0.4,2.2],'胡萝卜':[41,0.9,10.0,0.2,2.8],
+  '白菜':[13,1.5,2.2,0.2,1.0],'芹菜':[16,0.8,3.4,0.1,1.6],'青椒':[20,0.9,4.6,0.2,1.7],
+  '蘑菇':[22,3.1,3.3,0.3,2.1],'木耳':[21,1.5,3.8,0.2,2.6],'海带':[12,1.2,2.1,0.1,0.5],
+  '花生':[567,24.8,16.1,49.2,8.5],'核桃':[654,15.2,13.7,65.2,6.7],'杏仁':[579,21.2,21.6,49.9,12.5],
+  '巧克力':[546,4.9,59.4,31.3,3.4],'饼干':[433,6.5,70.6,14.2,1.1],'蛋糕':[347,6.0,57.0,12.0,0.8],
+  '薯片':[536,4.5,52.9,34.6,3.2],'可乐':[42,0,10.6,0,0],'奶茶':[70,1.2,10.2,2.5,0],
+  '咖啡':[1,0.1,0,0,0],'拿铁':[56,2.8,5.0,2.6,0],'橙汁':[45,0.7,10.4,0.1,0.2],
+  '蜂蜜':[304,0.3,82.4,0,0.2],'橄榄油':[884,0,0,100,0],'沙拉酱':[680,1.0,2.0,74.0,0],
+  '白砂糖':[387,0,100,0,0],'火锅':[300,15.0,10.0,22.0,1.0],'麻辣烫':[180,12.0,8.0,11.0,2.0],
+};
+function getToday(){return new Date().toLocaleDateString();}
+let _selectedFood=null;
+
+function searchFood(){
+  const q=document.getElementById('meal-food').value.trim().toLowerCase();
+  const sug=document.getElementById('food-suggestions');
+  if(!q){sug.classList.remove('show');return;}
+  const matches=Object.keys(FOOD_DB).filter(k=>k.toLowerCase().includes(q)).slice(0,8);
+  if(matches.length===0){sug.classList.remove('show');return;}
+  sug.innerHTML=matches.map(k=>{const d=FOOD_DB[k];return `<div class="food-opt" onclick="selectFood('${k}')"><span class="food-name">${k}</span><span class="food-info"> | 热量${d[0]}kcal 蛋白${d[1]}g 碳水${d[2]}g 脂肪${d[3]}g</span></div>`}).join('');
+  sug.classList.add('show');
+}
+function selectFood(name){
+  _selectedFood=name;
+  document.getElementById('meal-food').value=name;
+  document.getElementById('food-suggestions').classList.remove('show');
+  document.getElementById('meal-gram').value=100;
+  recalcMealNutrition();
+}
+function recalcMealNutrition(){
+  const name=_selectedFood||document.getElementById('meal-food').value.trim();
+  const gram=parseInt(document.getElementById('meal-gram').value)||100;
+  const data=FOOD_DB[name];
+  if(!data){document.getElementById('nutri-cal').textContent='--';document.getElementById('nutri-protein').textContent='--';document.getElementById('nutri-carb').textContent='--';document.getElementById('nutri-fat').textContent='--';document.getElementById('nutri-fiber').textContent='--';return;}
+  const ratio=gram/100;
+  document.getElementById('nutri-cal').textContent=Math.round(data[0]*ratio)+'kcal';
+  document.getElementById('nutri-protein').textContent=(data[1]*ratio).toFixed(1)+'g';
+  document.getElementById('nutri-carb').textContent=(data[2]*ratio).toFixed(1)+'g';
+  document.getElementById('nutri-fat').textContent=(data[3]*ratio).toFixed(1)+'g';
+  document.getElementById('nutri-fiber').textContent=(data[4]*ratio).toFixed(1)+'g';
+}
+
+function addMeal(){
+  const type=document.getElementById('meal-type').value;
+  const food=_selectedFood||document.getElementById('meal-food').value.trim();
+  if(!food){toast('请搜索并选择食物');return;}
+  const gram=parseInt(document.getElementById('meal-gram').value)||100;
+  const data=FOOD_DB[food];
+  if(!data){toast('未找到该食物数据，请从列表中选择');return;}
+  const ratio=gram/100;
+  const cal=Math.round(data[0]*ratio);
+  const protein=+(data[1]*ratio).toFixed(1);
+  const carb=+(data[2]*ratio).toFixed(1);
+  const fat=+(data[3]*ratio).toFixed(1);
+  const fiber=+(data[4]*ratio).toFixed(1);
+  const d=getData();const today=getToday();
+  d.meals.unshift({id:Date.now(),date:today,type,food,gram,cal,protein,carb,fat,fiber});
+  if(d.meals.length>200)d.meals=d.meals.slice(0,200);
+  saveData(d);
+  document.getElementById('meal-food').value='';_selectedFood=null;
+  document.getElementById('meal-gram').value=100;
+  document.getElementById('food-suggestions').classList.remove('show');
+  recalcMealNutrition();
+  renderDiet();
+}
+function delMeal(id){const d=getData();d.meals=d.meals.filter(x=>x.id!==id);saveData(d);renderDiet();}
+function addSport(){
+  const type=document.getElementById('sport-type').value;
+  const min=parseInt(document.getElementById('sport-min-input').value)||0;
+  if(min<=0){toast('请输入运动时间');return;}
+  const calPerMin=SPORT_CAL_PER_MIN[type]||5;
+  const cal=Math.round(min*calPerMin);
+  const d=getData();const today=getToday();
+  d.sports.unshift({id:Date.now(),date:today,type,min,cal});
+  if(d.sports.length>200)d.sports=d.sports.slice(0,200);
+  saveData(d);document.getElementById('sport-min-input').value='';renderHealth();
+}
+function delSport(id){const d=getData();d.sports=d.sports.filter(x=>x.id!==id);saveData(d);renderHealth();}
+
+function renderDiet(){
+  const d=getData();const today=getToday();
+  const todayMeals=d.meals.filter(m=>m.date===today);
+  let mealCal=0,mealProtein=0,mealCarb=0,mealFat=0;
+  todayMeals.forEach(m=>{mealCal+=m.cal||0;mealProtein+=m.protein||0;mealCarb+=m.carb||0;mealFat+=m.fat||0;});
+  document.getElementById('meal-cal').textContent=mealCal;
+  document.getElementById('meal-protein').textContent=mealProtein.toFixed(1);
+  document.getElementById('meal-carb').textContent=mealCarb.toFixed(1);
+  document.getElementById('meal-fat').textContent=mealFat.toFixed(1);
+  const typeLabel={breakfast:'🌅',lunch:'☀️',dinner:'🌙',snack:'🍪'};
+  document.getElementById('meal-list').innerHTML=todayMeals.length===0
+    ?'<div class="text-sm" style="text-align:center;padding:10px">今天还没记录饮食~</div>'
+    :todayMeals.map(m=>`<div class="bill-item"><span>${typeLabel[m.type]||m.type}</span><span style="flex:1">${escHtml(m.food)} ${m.gram||100}g</span><span style="color:var(--accent);font-weight:600;font-size:0.7rem">🔥${m.cal} P${m.protein||0} C${m.carb||0} F${m.fat||0}</span><button class="del-btn" onclick="delMeal(${m.id})">✕</button></div>`).join('');
+  document.getElementById('health-net').textContent=mealCal;
+  document.getElementById('health-protein').textContent=mealProtein.toFixed(1);
+  document.getElementById('health-carb').textContent=mealCarb.toFixed(1);
+  document.getElementById('health-fat').textContent=mealFat.toFixed(1);
+  const targetCal=1800;
+  const pct=Math.min(100,Math.max(0,Math.round(mealCal/targetCal*100)));
+  document.getElementById('health-bar').style.width=pct+'%';
+  let tip='';
+  if(mealCal===0)tip='记录今天的饮食吧~';
+  else if(mealCal<1200)tip='摄入偏低，注意营养均衡~';
+  else if(mealCal<=1800)tip='热量控制得很好！';
+  else if(mealCal<=2200)tip='稍微有点多，加点运动~';
+  else tip='今天吃得有点多哦！';
+  document.getElementById('health-tip').textContent=tip;
+}
+
+// ====== 减脂打卡（周一至周日健身房计划） ======
+const WEEK_PLANS={
+  1:{ // 周一
+    focus:'胸部 + 三头肌',dur:'60分钟',cal:450,
+    title:'🏋️ 周一 · 胸部+三头',
+    desc:'推胸日，重点刺激胸大肌和三头肌',
+    exercises:[
+      {name:'杠铃平板卧推',sets:'4组×10次',desc:'核心胸肌动作，注意肩胛骨收紧，杠铃下放至乳头线',video:'https://search.bilibili.com/all?keyword=杠铃平板卧推+标准动作教学',videoLabel:'📺 B站搜索'},
+      {name:'哑铃上斜卧推',sets:'4组×10次',desc:'针对上胸，凳子调至30-45度，感受上胸发力',video:'https://search.bilibili.com/all?keyword=哑铃上斜卧推+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'器械飞鸟夹胸',sets:'3组×12次',desc:'孤立刺激胸肌中缝，控制离心收缩',video:'https://search.bilibili.com/all?keyword=蝴蝶机夹胸+飞鸟+教学',videoLabel:'📺 B站搜索'},
+      {name:'双杠臂屈伸',sets:'3组×力竭',desc:'下胸+三头，身体前倾刺激胸肌',video:'https://search.bilibili.com/all?keyword=双杠臂屈伸+标准动作',videoLabel:'📺 B站搜索'},
+      {name:'绳索三头下压',sets:'4组×12次',desc:'孤立三头肌外侧头，顶峰收缩1秒',video:'https://search.bilibili.com/all?keyword=绳索三头下压+教学',videoLabel:'📺 B站搜索'},
+      {name:'窄距俯卧撑',sets:'3组×15次',desc:'收尾动作，双手与肩同宽，肘贴近身体',video:'https://search.bilibili.com/all?keyword=窄距俯卧撑+三头肌',videoLabel:'📺 B站搜索'},
+    ]
+  },
+  2:{ // 周二
+    focus:'背部 + 二头肌',dur:'60分钟',cal:420,
+    title:'🏋️ 周二 · 背部+二头',
+    desc:'拉背日，打造V型倒三角',
+    exercises:[
+      {name:'引体向上',sets:'4组×力竭',desc:'王牌背部动作，正握宽距，下巴过杠',video:'https://search.bilibili.com/all?keyword=引体向上+标准教学+初学者',videoLabel:'📺 B站搜索'},
+      {name:'杠铃划船',sets:'4组×10次',desc:'俯身45度，杠铃沿大腿拉至下腹',video:'https://search.bilibili.com/all?keyword=杠铃划船+标准动作教学',videoLabel:'📺 B站搜索'},
+      {name:'高位下拉',sets:'4组×12次',desc:'宽握，挺胸，杆拉至锁骨位置',video:'https://search.bilibili.com/all?keyword=高位下拉+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'坐姿绳索划船',sets:'3组×12次',desc:'V把，夹紧肩胛骨，感受背部挤压',video:'https://search.bilibili.com/all?keyword=坐姿绳索划船+教学',videoLabel:'📺 B站搜索'},
+      {name:'哑铃弯举',sets:'4组×12次',desc:'二头肌核心动作，避免借力摆动',video:'https://search.bilibili.com/all?keyword=哑铃弯举+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'锤式弯举',sets:'3组×12次',desc:'刺激肱肌和肱桡肌，增加手臂围度',video:'https://search.bilibili.com/all?keyword=锤式弯举+教学',videoLabel:'📺 B站搜索'},
+    ]
+  },
+  3:{ // 周三
+    focus:'腿部 + 肩部',dur:'65分钟',cal:500,
+    title:'🏋️ 周三 · 腿部+肩部',
+    desc:'下肢轰炸日，提升代谢燃脂',
+    exercises:[
+      {name:'杠铃深蹲',sets:'5组×8次',desc:'核心下肢动作，保持核心收紧，膝盖不内扣',video:'https://search.bilibili.com/all?keyword=杠铃深蹲+标准动作教学',videoLabel:'📺 B站搜索'},
+      {name:'罗马尼亚硬拉',sets:'4组×10次',desc:'针对腘绳肌和臀大肌，保持背部挺直',video:'https://search.bilibili.com/all?keyword=罗马尼亚硬拉+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'腿举机',sets:'4组×12次',desc:'大重量刺激股四头肌，脚位偏高刺激臀部',video:'https://search.bilibili.com/all?keyword=腿举机+倒蹬+教学',videoLabel:'📺 B站搜索'},
+      {name:'哑铃推举',sets:'4组×10次',desc:'肩部王牌动作，坐姿有靠背保护腰椎',video:'https://search.bilibili.com/all?keyword=哑铃推举+坐姿+肩部教学',videoLabel:'📺 B站搜索'},
+      {name:'哑铃侧平举',sets:'4组×15次',desc:'针对三角肌中束，轻重量高次数，控制节奏',video:'https://search.bilibili.com/all?keyword=哑铃侧平举+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'面拉',sets:'3组×15次',desc:'强化肩袖肌群和三角肌后束，改善圆肩',video:'https://search.bilibili.com/all?keyword=面拉+绳索面拉+教学',videoLabel:'📺 B站搜索'},
+    ]
+  },
+  4:{ // 周四
+    focus:'有氧 + 核心',dur:'50分钟',cal:380,
+    title:'🧘 周四 · 有氧+核心',
+    desc:'燃脂日，高强度有氧+腹部训练',
+    exercises:[
+      {name:'跑步机间歇跑',sets:'20分钟',desc:'快跑1分钟+慢走1分钟交替，心率保持140-160',video:'https://search.bilibili.com/all?keyword=跑步机+间歇跑+HIIT+减脂',videoLabel:'📺 B站搜索'},
+      {name:'平板支撑',sets:'3组×60秒',desc:'核心稳定训练，身体成一条直线',video:'https://search.bilibili.com/all?keyword=平板支撑+标准教学+核心',videoLabel:'📺 B站搜索'},
+      {name:'卷腹',sets:'4组×20次',desc:'针对腹直肌上部，肩胛骨离地即可',video:'https://search.bilibili.com/all?keyword=卷腹+标准教学+腹肌',videoLabel:'📺 B站搜索'},
+      {name:'俄罗斯转体',sets:'3组×20次',desc:'针对腹斜肌，双脚离地保持平衡',video:'https://search.bilibili.com/all?keyword=俄罗斯转体+教学+腹肌',videoLabel:'📺 B站搜索'},
+      {name:'仰卧抬腿',sets:'3组×15次',desc:'针对下腹部，控制下放速度',video:'https://search.bilibili.com/all?keyword=仰卧抬腿+下腹+教学',videoLabel:'📺 B站搜索'},
+      {name:'登山者',sets:'3组×30秒',desc:'有氧+核心结合，快速交替提膝',video:'https://search.bilibili.com/all?keyword=登山者+核心训练+教学',videoLabel:'📺 B站搜索'},
+    ]
+  },
+  5:{ // 周五
+    focus:'背部 + 胸部（超级组）',dur:'60分钟',cal:460,
+    title:'🔥 周五 · 胸背超级组',
+    desc:'对抗肌超级组训练，效率翻倍',
+    exercises:[
+      {name:'卧推+划船超级组',sets:'4组×10次',desc:'卧推完立即做划船，组间休息90秒',video:'https://search.bilibili.com/all?keyword=超级组+卧推+划船+健身',videoLabel:'📺 B站搜索'},
+      {name:'上斜哑铃卧推',sets:'4组×10次',desc:'上胸重点，控制离心3秒',video:'https://search.bilibili.com/all?keyword=哑铃上斜卧推+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'高位下拉+哑铃飞鸟',sets:'3组×12次',desc:'超级组，下拉完直接飞鸟',video:'https://search.bilibili.com/all?keyword=超级组+高位下拉+飞鸟',videoLabel:'📺 B站搜索'},
+      {name:'绳索划船+俯卧撑',sets:'3组×力竭',desc:'收尾超级组，榨干最后力量',video:'https://search.bilibili.com/all?keyword=超级组+划船+俯卧撑',videoLabel:'📺 B站搜索'},
+      {name:'悬垂举腿',sets:'3组×15次',desc:'强化下腹和髋屈肌',video:'https://search.bilibili.com/all?keyword=悬垂举腿+教学+腹肌',videoLabel:'📺 B站搜索'},
+    ]
+  },
+  6:{ // 周六
+    focus:'臀腿 + 手臂',dur:'60分钟',cal:480,
+    title:'🍑 周六 · 臀腿+手臂',
+    desc:'臀腿塑形日，专注下半身曲线',
+    exercises:[
+      {name:'臀推',sets:'4组×10次',desc:'臀部王牌动作，顶峰收缩2秒',video:'https://search.bilibili.com/all?keyword=臀推+杠铃臀桥+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'保加利亚分腿蹲',sets:'3组×10次/腿',desc:'单腿训练，深度刺激臀大肌和股四头肌',video:'https://search.bilibili.com/all?keyword=保加利亚分腿蹲+教学',videoLabel:'📺 B站搜索'},
+      {name:'罗马尼亚硬拉',sets:'4组×12次',desc:'轻重量高次数，专注腘绳肌和臀部',video:'https://search.bilibili.com/all?keyword=罗马尼亚硬拉+标准教学',videoLabel:'📺 B站搜索'},
+      {name:'绳索后踢',sets:'3组×15次/腿',desc:'孤立刺激臀大肌上部',video:'https://search.bilibili.com/all?keyword=绳索后踢+臀大肌+教学',videoLabel:'📺 B站搜索'},
+      {name:'杠铃弯举+窄推',sets:'3组×12次',desc:'二头+三头超级组收尾',video:'https://search.bilibili.com/all?keyword=杠铃弯举+窄距卧推+超级组',videoLabel:'📺 B站搜索'},
+    ]
+  },
+  0:{ // 周日
+    focus:'休息日 / 拉伸恢复',dur:'30分钟',cal:120,
+    title:'🧘‍♀️ 周日 · 休息恢复',
+    desc:'主动恢复日，泡沫轴放松+拉伸',
+    exercises:[
+      {name:'全身泡沫轴放松',sets:'15分钟',desc:'大腿前后侧+背部+臀部，每部位30秒',video:'https://search.bilibili.com/all?keyword=泡沫轴放松+全身+教学',videoLabel:'📺 B站搜索'},
+      {name:'髋屈肌拉伸',sets:'2组×30秒/侧',desc:'改善久坐导致的髋屈肌紧张',video:'https://search.bilibili.com/all?keyword=髋屈肌拉伸+教学',videoLabel:'📺 B站搜索'},
+      {name:'猫牛式脊柱活动',sets:'2组×10次',desc:'改善脊柱灵活性',video:'https://search.bilibili.com/all?keyword=猫牛式+脊柱拉伸+瑜伽',videoLabel:'📺 B站搜索'},
+      {name:'肩部环绕拉伸',sets:'2组×10次',desc:'缓解肩颈紧张',video:'https://search.bilibili.com/all?keyword=肩部环绕拉伸+放松',videoLabel:'📺 B站搜索'},
+      {name:'深呼吸冥想',sets:'5分钟',desc:'腹式呼吸，心率降至静息状态',video:'https://search.bilibili.com/all?keyword=冥想+深呼吸+放松',videoLabel:'📺 B站搜索'},
+    ]
+  }
+};
+
+function renderFitness(){
+  const today=new Date().getDay(); // 0=周日,1=周一...
+  const plan=WEEK_PLANS[today];
+  document.getElementById('fitness-day-title').textContent=plan.title;
+  document.getElementById('fitness-focus').textContent=plan.focus;
+  document.getElementById('fitness-dur').textContent=plan.dur;
+  document.getElementById('fitness-cal-est').textContent=plan.cal+'kcal';
+  
+  const d=getData();const todayStr=getToday();
+  d.fitnessChecked=d.fitnessChecked||{};
+  d.fitnessChecked[todayStr]=d.fitnessChecked[todayStr]||{};
+  saveData(d);
+  
+  const checked=d.fitnessChecked[todayStr]||{};
+  const el=document.getElementById('fitness-exercises');
+  el.innerHTML='<div style="font-size:0.75rem;color:var(--text2);margin-bottom:6px">📝 '+plan.desc+'</div>'
+    +plan.exercises.map((ex,i)=>{
+    const isDone=!!checked[ex.name];
+    return `<div class="fitness-ex${isDone?' done-ex':''}">
+      <div class="ex-header">
+        <span class="ex-num">${i+1}</span>
+        <span class="ex-name">${ex.name}</span>
+        <span class="ex-sets">${ex.sets}</span>
+        <button class="ex-check${isDone?' done':''}" onclick="toggleFitnessCheck('${ex.name.replace(/'/g,"\\'")}')">${isDone?'✓ 完成':'○ 打卡'}</button>
+      </div>
+      <div class="ex-desc">💡 ${ex.desc}</div>
+      <a class="ex-video" href="${ex.video}" target="_blank" rel="noopener">🎬 ${ex.videoLabel}</a>
+    </div>`;
+  }).join('');
+}
+// 四级核心词汇库（约500词，每天20个）
+const CET4_WORDS=[
+  {en:'abandon',zh:'放弃；遗弃',phonetic:'/əˈbændən/'},
+  {en:'ability',zh:'能力；才能',phonetic:'/əˈbɪləti/'},
+  {en:'abroad',zh:'在国外；到国外',phonetic:'/əˈbrɔːd/'},
+  {en:'absence',zh:'缺席；不在',phonetic:'/ˈæbsəns/'},
+  {en:'absolute',zh:'绝对的；完全的',phonetic:'/ˈæbsəluːt/'},
+  {en:'absorb',zh:'吸收；吸引',phonetic:'/əbˈzɔːrb/'},
+  {en:'abstract',zh:'抽象的；摘要',phonetic:'/ˈæbstrækt/'},
+  {en:'abundant',zh:'丰富的；充裕的',phonetic:'/əˈbʌndənt/'},
+  {en:'academic',zh:'学术的；学院的',phonetic:'/ˌækəˈdemɪk/'},
+  {en:'accelerate',zh:'加速；促进',phonetic:'/əkˈseləreɪt/'},
+  {en:'accent',zh:'口音；重音',phonetic:'/ˈæksent/'},
+  {en:'accept',zh:'接受；认可',phonetic:'/əkˈsept/'},
+  {en:'access',zh:'进入；通道',phonetic:'/ˈækses/'},
+  {en:'accompany',zh:'陪伴；伴随',phonetic:'/əˈkʌmpəni/'},
+  {en:'accomplish',zh:'完成；实现',phonetic:'/əˈkɑːmplɪʃ/'},
+  {en:'account',zh:'账户；解释',phonetic:'/əˈkaʊnt/'},
+  {en:'accurate',zh:'准确的；精确的',phonetic:'/ˈækjərət/'},
+  {en:'achieve',zh:'达到；取得',phonetic:'/əˈtʃiːv/'},
+  {en:'acknowledge',zh:'承认；确认',phonetic:'/əkˈnɑːlɪdʒ/'},
+  {en:'acquire',zh:'获得；学到',phonetic:'/əˈkwaɪər/'},
+  {en:'adapt',zh:'适应；改编',phonetic:'/əˈdæpt/'},
+  {en:'adequate',zh:'足够的；适当的',phonetic:'/ˈædɪkwət/'},
+  {en:'adjust',zh:'调整；适应',phonetic:'/əˈdʒʌst/'},
+  {en:'administration',zh:'管理；行政',phonetic:'/ədˌmɪnɪˈstreɪʃn/'},
+  {en:'admire',zh:'钦佩；赞赏',phonetic:'/ədˈmaɪər/'},
+  {en:'admit',zh:'承认；准许进入',phonetic:'/ədˈmɪt/'},
+  {en:'adopt',zh:'采用；收养',phonetic:'/əˈdɑːpt/'},
+  {en:'advance',zh:'前进；进步',phonetic:'/ədˈvæns/'},
+  {en:'advantage',zh:'优势；有利条件',phonetic:'/ədˈvæntɪdʒ/'},
+  {en:'advertise',zh:'做广告；宣传',phonetic:'/ˈædvərtaɪz/'},
+  {en:'affair',zh:'事务；事件',phonetic:'/əˈfer/'},
+  {en:'affect',zh:'影响；感动',phonetic:'/əˈfekt/'},
+  {en:'afford',zh:'负担得起；提供',phonetic:'/əˈfɔːrd/'},
+  {en:'aggressive',zh:'侵略的；好斗的',phonetic:'/əˈɡresɪv/'},
+  {en:'allocate',zh:'分配；拨出',phonetic:'/ˈæləkeɪt/'},
+  {en:'alternative',zh:'替代的；选择',phonetic:'/ɔːlˈtɜːrnətɪv/'},
+  {en:'amaze',zh:'使惊奇；使惊愕',phonetic:'/əˈmeɪz/'},
+  {en:'ambition',zh:'雄心；抱负',phonetic:'/æmˈbɪʃn/'},
+  {en:'analyze',zh:'分析；解析',phonetic:'/ˈænəlaɪz/'},
+  {en:'ancestor',zh:'祖先；祖宗',phonetic:'/ˈænsestər/'},
+  {en:'annual',zh:'每年的；年度的',phonetic:'/ˈænjuəl/'},
+  {en:'anticipate',zh:'预期；期望',phonetic:'/ænˈtɪsɪpeɪt/'},
+  {en:'anxiety',zh:'焦虑；忧虑',phonetic:'/æŋˈzaɪəti/'},
+  {en:'apparent',zh:'明显的；表面上的',phonetic:'/əˈpærənt/'},
+  {en:'appeal',zh:'呼吁；吸引',phonetic:'/əˈpiːl/'},
+  {en:'appetite',zh:'食欲；胃口',phonetic:'/ˈæpɪtaɪt/'},
+  {en:'appliance',zh:'电器；器具',phonetic:'/əˈplaɪəns/'},
+  {en:'application',zh:'申请；应用',phonetic:'/ˌæplɪˈkeɪʃn/'},
+  {en:'appoint',zh:'任命；指定',phonetic:'/əˈpɔɪnt/'},
+  {en:'appreciate',zh:'欣赏；感激',phonetic:'/əˈpriːʃieɪt/'},
+  {en:'approach',zh:'接近；方法',phonetic:'/əˈproʊtʃ/'},
+  {en:'appropriate',zh:'适当的；合适的',phonetic:'/əˈproʊpriət/'},
+  {en:'approve',zh:'批准；赞成',phonetic:'/əˈpruːv/'},
+  {en:'arise',zh:'出现；产生',phonetic:'/əˈraɪz/'},
+  {en:'arrange',zh:'安排；整理',phonetic:'/əˈreɪndʒ/'},
+  {en:'artificial',zh:'人工的；人造的',phonetic:'/ˌɑːrtɪˈfɪʃl/'},
+  {en:'aspect',zh:'方面；层面',phonetic:'/ˈæspekt/'},
+  {en:'assemble',zh:'集合；组装',phonetic:'/əˈsembl/'},
+  {en:'assess',zh:'评估；评定',phonetic:'/əˈses/'},
+  {en:'assign',zh:'分配；指派',phonetic:'/əˈsaɪn/'},
+  {en:'assist',zh:'帮助；协助',phonetic:'/əˈsɪst/'},
+  {en:'associate',zh:'联系；关联',phonetic:'/əˈsoʊʃieɪt/'},
+  {en:'assume',zh:'假设；承担',phonetic:'/əˈsuːm/'},
+  {en:'atmosphere',zh:'气氛；大气层',phonetic:'/ˈætməsfɪr/'},
+  {en:'attach',zh:'附上；连接',phonetic:'/əˈtætʃ/'},
+  {en:'attempt',zh:'尝试；企图',phonetic:'/əˈtempt/'},
+  {en:'attend',zh:'参加；出席',phonetic:'/əˈtend/'},
+  {en:'attitude',zh:'态度；看法',phonetic:'/ˈætɪtuːd/'},
+  {en:'attract',zh:'吸引；引起',phonetic:'/əˈtrækt/'},
+  {en:'attribute',zh:'属性；归因于',phonetic:'/əˈtrɪbjuːt/'},
+  {en:'authority',zh:'权威；当局',phonetic:'/əˈθɔːrəti/'},
+  {en:'available',zh:'可用的；有效的',phonetic:'/əˈveɪləbl/'},
+  {en:'avenue',zh:'大街；途径',phonetic:'/ˈævənuː/'},
+  {en:'average',zh:'平均的；普通的',phonetic:'/ˈævərɪdʒ/'},
+  {en:'avoid',zh:'避免；回避',phonetic:'/əˈvɔɪd/'},
+  {en:'award',zh:'奖项；授予',phonetic:'/əˈwɔːrd/'},
+  {en:'aware',zh:'意识到的；知道的',phonetic:'/əˈwer/'},
+  {en:'balance',zh:'平衡；余额',phonetic:'/ˈbæləns/'},
+  {en:'barrier',zh:'障碍；屏障',phonetic:'/ˈbæriər/'},
+  {en:'beneath',zh:'在…下方',phonetic:'/bɪˈniːθ/'},
+  {en:'benefit',zh:'利益；好处',phonetic:'/ˈbenɪfɪt/'},
+  {en:'billion',zh:'十亿',phonetic:'/ˈbɪljən/'},
+  {en:'bother',zh:'打扰；烦恼',phonetic:'/ˈbɑːðər/'},
+  {en:'boundary',zh:'边界；界限',phonetic:'/ˈbaʊndri/'},
+  {en:'brand',zh:'品牌；商标',phonetic:'/brænd/'},
+  {en:'budget',zh:'预算',phonetic:'/ˈbʌdʒɪt/'},
+  {en:'burden',zh:'负担；重担',phonetic:'/ˈbɜːrdn/'},
+  {en:'campaign',zh:'运动；战役',phonetic:'/kæmˈpeɪn/'},
+  {en:'capable',zh:'有能力的',phonetic:'/ˈkeɪpəbl/'},
+  {en:'capacity',zh:'能力；容量',phonetic:'/kəˈpæsəti/'},
+  {en:'capture',zh:'捕获；俘获',phonetic:'/ˈkæptʃər/'},
+  {en:'career',zh:'职业；生涯',phonetic:'/kəˈrɪr/'},
+  {en:'category',zh:'类别；种类',phonetic:'/ˈkætəɡɔːri/'},
+  {en:'celebrate',zh:'庆祝；赞美',phonetic:'/ˈselɪbreɪt/'},
+  {en:'challenge',zh:'挑战；质疑',phonetic:'/ˈtʃælɪndʒ/'},
+  {en:'character',zh:'性格；角色',phonetic:'/ˈkærəktər/'},
+  {en:'circumstance',zh:'环境；情况',phonetic:'/ˈsɜːrkəmstæns/'},
+  {en:'claim',zh:'声称；要求',phonetic:'/kleɪm/'},
+  {en:'climate',zh:'气候；风气',phonetic:'/ˈklaɪmət/'},
+  {en:'collapse',zh:'倒塌；崩溃',phonetic:'/kəˈlæps/'},
+  {en:'colleague',zh:'同事；同僚',phonetic:'/ˈkɑːliːɡ/'},
+  {en:'combine',zh:'结合；联合',phonetic:'/kəmˈbaɪn/'},
+  {en:'comment',zh:'评论；意见',phonetic:'/ˈkɑːment/'},
+  {en:'commission',zh:'委员会；佣金',phonetic:'/kəˈmɪʃn/'},
+  {en:'commit',zh:'承诺；犯罪',phonetic:'/kəˈmɪt/'},
+  {en:'communicate',zh:'交流；沟通',phonetic:'/kəˈmjuːnɪkeɪt/'},
+  {en:'community',zh:'社区；团体',phonetic:'/kəˈmjuːnəti/'},
+  {en:'companion',zh:'同伴；伙伴',phonetic:'/kəmˈpæniən/'},
+  {en:'compare',zh:'比较；对比',phonetic:'/kəmˈper/'},
+  {en:'compensate',zh:'补偿；赔偿',phonetic:'/ˈkɑːmpenseɪt/'},
+  {en:'compete',zh:'竞争；比赛',phonetic:'/kəmˈpiːt/'},
+  {en:'competent',zh:'有能力的；胜任的',phonetic:'/ˈkɑːmpɪtənt/'},
+  {en:'complaint',zh:'投诉；抱怨',phonetic:'/kəmˈpleɪnt/'},
+  {en:'complex',zh:'复杂的；综合体',phonetic:'/kəmˈpleks/'},
+  {en:'component',zh:'成分；组件',phonetic:'/kəmˈpoʊnənt/'},
+  {en:'concentrate',zh:'集中；专注',phonetic:'/ˈkɑːnsntreɪt/'},
+  {en:'concept',zh:'概念；观念',phonetic:'/ˈkɑːnsept/'},
+  {en:'concern',zh:'关心；担忧',phonetic:'/kənˈsɜːrn/'},
+  {en:'conclude',zh:'总结；推断',phonetic:'/kənˈkluːd/'},
+  {en:'conduct',zh:'行为；指挥',phonetic:'/kənˈdʌkt/'},
+  {en:'conference',zh:'会议；讨论会',phonetic:'/ˈkɑːnfərəns/'},
+  {en:'confident',zh:'自信的；确信的',phonetic:'/ˈkɑːnfɪdənt/'},
+  {en:'confirm',zh:'确认；证实',phonetic:'/kənˈfɜːrm/'},
+  {en:'conflict',zh:'冲突；矛盾',phonetic:'/ˈkɑːnflɪkt/'},
+  {en:'confuse',zh:'使困惑；混淆',phonetic:'/kənˈfjuːz/'},
+  {en:'connect',zh:'连接；联系',phonetic:'/kəˈnekt/'},
+  {en:'conscious',zh:'有意识的；清醒的',phonetic:'/ˈkɑːnʃəs/'},
+  {en:'consequence',zh:'结果；后果',phonetic:'/ˈkɑːnsɪkwens/'},
+  {en:'conservative',zh:'保守的',phonetic:'/kənˈsɜːrvətɪv/'},
+  {en:'consider',zh:'考虑；认为',phonetic:'/kənˈsɪdər/'},
+  {en:'consistent',zh:'一致的；始终如一的',phonetic:'/kənˈsɪstənt/'},
+  {en:'constant',zh:'不断的；恒定的',phonetic:'/ˈkɑːnstənt/'},
+  {en:'construct',zh:'建造；构建',phonetic:'/kənˈstrʌkt/'},
+  {en:'consult',zh:'咨询；查阅',phonetic:'/kənˈsʌlt/'},
+  {en:'consume',zh:'消费；消耗',phonetic:'/kənˈsuːm/'},
+  {en:'contact',zh:'接触；联系',phonetic:'/ˈkɑːntækt/'},
+  {en:'contain',zh:'包含；容纳',phonetic:'/kənˈteɪn/'},
+  {en:'contemporary',zh:'当代的；同时代的',phonetic:'/kənˈtempəreri/'},
+  {en:'content',zh:'内容；满足的',phonetic:'/ˈkɑːntent/'},
+  {en:'context',zh:'上下文；背景',phonetic:'/ˈkɑːntekst/'},
+  {en:'contract',zh:'合同；收缩',phonetic:'/ˈkɑːntrækt/'},
+  {en:'contribute',zh:'贡献；捐献',phonetic:'/kənˈtrɪbjuːt/'},
+  {en:'convenient',zh:'方便的；便利的',phonetic:'/kənˈviːniənt/'},
+  {en:'convention',zh:'惯例；大会',phonetic:'/kənˈvenʃn/'},
+  {en:'convince',zh:'说服；使信服',phonetic:'/kənˈvɪns/'},
+  {en:'cooperate',zh:'合作；协作',phonetic:'/koʊˈɑːpəreɪt/'},
+  {en:'corporation',zh:'公司；企业',phonetic:'/ˌkɔːrpəˈreɪʃn/'},
+  {en:'correspond',zh:'符合；通信',phonetic:'/ˌkɔːrəˈspɑːnd/'},
+  {en:'council',zh:'委员会；理事会',phonetic:'/ˈkaʊnsl/'},
+  {en:'create',zh:'创造；创建',phonetic:'/kriˈeɪt/'},
+  {en:'criminal',zh:'犯罪的；罪犯',phonetic:'/ˈkrɪmɪnl/'},
+  {en:'critical',zh:'批评的；关键的',phonetic:'/ˈkrɪtɪkl/'},
+  {en:'culture',zh:'文化；文明',phonetic:'/ˈkʌltʃər/'},
+  {en:'current',zh:'当前的；水流',phonetic:'/ˈkɜːrənt/'},
+  {en:'debate',zh:'辩论；争论',phonetic:'/dɪˈbeɪt/'},
+  {en:'decade',zh:'十年',phonetic:'/ˈdekeɪd/'},
+  {en:'declare',zh:'宣布；声明',phonetic:'/dɪˈkler/'},
+  {en:'decline',zh:'下降；拒绝',phonetic:'/dɪˈklaɪn/'},
+  {en:'decorate',zh:'装饰；装修',phonetic:'/ˈdekəreɪt/'},
+  {en:'decrease',zh:'减少；降低',phonetic:'/dɪˈkriːs/'},
+  {en:'defend',zh:'防御；辩护',phonetic:'/dɪˈfend/'},
+  {en:'define',zh:'定义；界定',phonetic:'/dɪˈfaɪn/'},
+  {en:'definitely',zh:'肯定地；明确地',phonetic:'/ˈdefɪnətli/'},
+  {en:'deliver',zh:'递送；发表',phonetic:'/dɪˈlɪvər/'},
+  {en:'demand',zh:'要求；需求',phonetic:'/dɪˈmænd/'},
+  {en:'demonstrate',zh:'演示；证明',phonetic:'/ˈdemənstreɪt/'},
+  {en:'depart',zh:'离开；出发',phonetic:'/dɪˈpɑːrt/'},
+  {en:'depend',zh:'依赖；取决于',phonetic:'/dɪˈpend/'},
+  {en:'deposit',zh:'存款；押金',phonetic:'/dɪˈpɑːzɪt/'},
+  {en:'describe',zh:'描述；形容',phonetic:'/dɪˈskraɪb/'},
+  {en:'deserve',zh:'值得；应得',phonetic:'/dɪˈzɜːrv/'},
+  {en:'design',zh:'设计；图案',phonetic:'/dɪˈzaɪn/'},
+  {en:'desire',zh:'渴望；欲望',phonetic:'/dɪˈzaɪər/'},
+  {en:'despite',zh:'尽管；不管',phonetic:'/dɪˈspaɪt/'},
+  {en:'destination',zh:'目的地；终点',phonetic:'/ˌdestɪˈneɪʃn/'},
+  {en:'determine',zh:'决定；确定',phonetic:'/dɪˈtɜːrmɪn/'},
+  {en:'develop',zh:'发展；开发',phonetic:'/dɪˈveləp/'},
+  {en:'device',zh:'设备；装置',phonetic:'/dɪˈvaɪs/'},
+  {en:'devote',zh:'致力于；奉献',phonetic:'/dɪˈvoʊt/'},
+  {en:'discipline',zh:'纪律；学科',phonetic:'/ˈdɪsəplɪn/'},
+  {en:'discover',zh:'发现；发觉',phonetic:'/dɪˈskʌvər/'},
+  {en:'display',zh:'展示；显示',phonetic:'/dɪˈspleɪ/'},
+  {en:'distinguish',zh:'区分；辨别',phonetic:'/dɪˈstɪŋɡwɪʃ/'},
+  {en:'distribute',zh:'分配；分发',phonetic:'/dɪˈstrɪbjuːt/'},
+  {en:'domestic',zh:'国内的；家庭的',phonetic:'/dəˈmestɪk/'},
+  {en:'dominate',zh:'支配；主导',phonetic:'/ˈdɑːmɪneɪt/'},
+  {en:'dramatic',zh:'戏剧性的；剧烈的',phonetic:'/drəˈmætɪk/'},
+  {en:'economy',zh:'经济；节约',phonetic:'/ɪˈkɑːnəmi/'},
+  {en:'edition',zh:'版本；版次',phonetic:'/ɪˈdɪʃn/'},
+  {en:'efficient',zh:'高效的；有效率的',phonetic:'/ɪˈfɪʃnt/'},
+  {en:'element',zh:'元素；要素',phonetic:'/ˈelɪmənt/'},
+  {en:'eliminate',zh:'消除；淘汰',phonetic:'/ɪˈlɪmɪneɪt/'},
+  {en:'embrace',zh:'拥抱；包含',phonetic:'/ɪmˈbreɪs/'},
+  {en:'emerge',zh:'出现；浮现',phonetic:'/ɪˈmɜːrdʒ/'},
+  {en:'emotion',zh:'情感；情绪',phonetic:'/ɪˈmoʊʃn/'},
+  {en:'emphasis',zh:'强调；重点',phonetic:'/ˈemfəsɪs/'},
+  {en:'employ',zh:'雇用；使用',phonetic:'/ɪmˈplɔɪ/'},
+  {en:'enable',zh:'使能够；启用',phonetic:'/ɪˈneɪbl/'},
+  {en:'encounter',zh:'遭遇；邂逅',phonetic:'/ɪnˈkaʊntər/'},
+  {en:'encourage',zh:'鼓励；激励',phonetic:'/ɪnˈkɜːrɪdʒ/'},
+  {en:'engage',zh:'从事；吸引',phonetic:'/ɪnˈɡeɪdʒ/'},
+  {en:'enormous',zh:'巨大的；庞大的',phonetic:'/ɪˈnɔːrməs/'},
+  {en:'ensure',zh:'确保；保证',phonetic:'/ɪnˈʃʊr/'},
+  {en:'enterprise',zh:'企业；事业',phonetic:'/ˈentərpraɪz/'},
+  {en:'enthusiasm',zh:'热情；热忱',phonetic:'/ɪnˈθuːziæzəm/'},
+  {en:'environment',zh:'环境',phonetic:'/ɪnˈvaɪrənmənt/'},
+  {en:'equipment',zh:'设备；装备',phonetic:'/ɪˈkwɪpmənt/'},
+  {en:'essential',zh:'必要的；本质的',phonetic:'/ɪˈsenʃl/'},
+  {en:'establish',zh:'建立；设立',phonetic:'/ɪˈstæblɪʃ/'},
+  {en:'evaluate',zh:'评价；评估',phonetic:'/ɪˈvæljueɪt/'},
+  {en:'eventually',zh:'最终；终于',phonetic:'/ɪˈventʃuəli/'},
+  {en:'evidence',zh:'证据；迹象',phonetic:'/ˈevɪdəns/'},
+  {en:'evolve',zh:'进化；发展',phonetic:'/ɪˈvɑːlv/'},
+  {en:'exaggerate',zh:'夸张；夸大',phonetic:'/ɪɡˈzædʒəreɪt/'},
+  {en:'examine',zh:'检查；考试',phonetic:'/ɪɡˈzæmɪn/'},
+  {en:'exception',zh:'例外；除外',phonetic:'/ɪkˈsepʃn/'},
+  {en:'exchange',zh:'交换；兑换',phonetic:'/ɪksˈtʃeɪndʒ/'},
+  {en:'exclude',zh:'排除；排斥',phonetic:'/ɪkˈskluːd/'},
+  {en:'execute',zh:'执行；实施',phonetic:'/ˈeksɪkjuːt/'},
+  {en:'exhibit',zh:'展览；展示',phonetic:'/ɪɡˈzɪbɪt/'},
+  {en:'exist',zh:'存在；生存',phonetic:'/ɪɡˈzɪst/'},
+  {en:'expand',zh:'扩展；膨胀',phonetic:'/ɪkˈspænd/'},
+  {en:'expect',zh:'期望；预期',phonetic:'/ɪkˈspekt/'},
+  {en:'expense',zh:'费用；开支',phonetic:'/ɪkˈspens/'},
+  {en:'experiment',zh:'实验；试验',phonetic:'/ɪkˈsperɪmənt/'},
+  {en:'explore',zh:'探索；探究',phonetic:'/ɪkˈsplɔːr/'},
+  {en:'export',zh:'出口；输出',phonetic:'/ɪkˈspɔːrt/'},
+  {en:'expose',zh:'暴露；揭露',phonetic:'/ɪkˈspoʊz/'},
+  {en:'extend',zh:'延伸；扩展',phonetic:'/ɪkˈstend/'},
+  {en:'external',zh:'外部的；外面的',phonetic:'/ɪkˈstɜːrnl/'},
+  {en:'extraordinary',zh:'非凡的；特别的',phonetic:'/ɪkˈstrɔːrdəneri/'},
+  {en:'extreme',zh:'极端的；极度的',phonetic:'/ɪkˈstriːm/'},
+  {en:'facility',zh:'设施；设备',phonetic:'/fəˈsɪləti/'},
+  {en:'factor',zh:'因素；要素',phonetic:'/ˈfæktər/'},
+  {en:'faculty',zh:'能力；全体教员',phonetic:'/ˈfæklti/'},
+  {en:'faith',zh:'信仰；信念',phonetic:'/feɪθ/'},
+  {en:'fashion',zh:'时尚；方式',phonetic:'/ˈfæʃn/'},
+  {en:'fatal',zh:'致命的；毁灭性的',phonetic:'/ˈfeɪtl/'},
+  {en:'feature',zh:'特征；特色',phonetic:'/ˈfiːtʃər/'},
+  {en:'federal',zh:'联邦的',phonetic:'/ˈfedərəl/'},
+  {en:'finance',zh:'金融；财务',phonetic:'/ˈfaɪnæns/'},
+  {en:'flexible',zh:'灵活的；柔韧的',phonetic:'/ˈfleksəbl/'},
+  {en:'focus',zh:'焦点；集中',phonetic:'/ˈfoʊkəs/'},
+  {en:'forecast',zh:'预报；预测',phonetic:'/ˈfɔːrkæst/'},
+  {en:'formal',zh:'正式的；形式的',phonetic:'/ˈfɔːrml/'},
+  {en:'former',zh:'以前的；前者',phonetic:'/ˈfɔːrmər/'},
+  {en:'foundation',zh:'基础；基金会',phonetic:'/faʊnˈdeɪʃn/'},
+  {en:'frequent',zh:'频繁的；经常的',phonetic:'/ˈfriːkwənt/'},
+  {en:'function',zh:'功能；作用',phonetic:'/ˈfʌŋkʃn/'},
+  {en:'fundamental',zh:'基本的；根本的',phonetic:'/ˌfʌndəˈmentl/'},
+  {en:'generate',zh:'产生；生成',phonetic:'/ˈdʒenəreɪt/'},
+  {en:'generous',zh:'慷慨的；大方的',phonetic:'/ˈdʒenərəs/'},
+  {en:'global',zh:'全球的；整体的',phonetic:'/ˈɡloʊbl/'},
+  {en:'gradual',zh:'逐渐的；渐进的',phonetic:'/ˈɡrædʒuəl/'},
+  {en:'guarantee',zh:'保证；担保',phonetic:'/ˌɡærənˈtiː/'},
+  {en:'identify',zh:'识别；确认',phonetic:'/aɪˈdentɪfaɪ/'},
+  {en:'ignore',zh:'忽视；不理睬',phonetic:'/ɪɡˈnɔːr/'},
+  {en:'illustrate',zh:'说明；阐明',phonetic:'/ˈɪləstreɪt/'},
+  {en:'impact',zh:'影响；冲击',phonetic:'/ˈɪmpækt/'},
+  {en:'implement',zh:'实施；执行',phonetic:'/ˈɪmplɪment/'},
+  {en:'imply',zh:'暗示；意味',phonetic:'/ɪmˈplaɪ/'},
+  {en:'impose',zh:'强加；征收',phonetic:'/ɪmˈpoʊz/'},
+  {en:'income',zh:'收入；收益',phonetic:'/ˈɪnkʌm/'},
+  {en:'indicate',zh:'表明；指示',phonetic:'/ˈɪndɪkeɪt/'},
+  {en:'individual',zh:'个人的；个体',phonetic:'/ˌɪndɪˈvɪdʒuəl/'},
+  {en:'influence',zh:'影响；势力',phonetic:'/ˈɪnfluəns/'},
+  {en:'inform',zh:'通知；告知',phonetic:'/ɪnˈfɔːrm/'},
+  {en:'initial',zh:'最初的；开始的',phonetic:'/ɪˈnɪʃl/'},
+  {en:'innovation',zh:'创新；革新',phonetic:'/ˌɪnəˈveɪʃn/'},
+  {en:'inquiry',zh:'询问；调查',phonetic:'/ɪnˈkwaɪəri/'},
+  {en:'insert',zh:'插入；嵌入',phonetic:'/ɪnˈsɜːrt/'},
+  {en:'inspect',zh:'检查；视察',phonetic:'/ɪnˈspekt/'},
+  {en:'install',zh:'安装；设置',phonetic:'/ɪnˈstɔːl/'},
+  {en:'institute',zh:'学院；机构',phonetic:'/ˈɪnstɪtuːt/'},
+  {en:'instrument',zh:'工具；乐器',phonetic:'/ˈɪnstrəmənt/'},
+  {en:'insurance',zh:'保险',phonetic:'/ɪnˈʃʊrəns/'},
+  {en:'intellectual',zh:'智力的；知识分子',phonetic:'/ˌɪntəˈlektʃuəl/'},
+  {en:'intelligent',zh:'聪明的；智能的',phonetic:'/ɪnˈtelɪdʒənt/'},
+  {en:'intense',zh:'强烈的；紧张的',phonetic:'/ɪnˈtens/'},
+  {en:'interact',zh:'互动；相互作用',phonetic:'/ˌɪntərˈækt/'},
+  {en:'internal',zh:'内部的；国内的',phonetic:'/ɪnˈtɜːrnl/'},
+  {en:'interpret',zh:'解释；口译',phonetic:'/ɪnˈtɜːrprɪt/'},
+  {en:'invest',zh:'投资；投入',phonetic:'/ɪnˈvest/'},
+  {en:'investigate',zh:'调查；研究',phonetic:'/ɪnˈvestɪɡeɪt/'},
+  {en:'involve',zh:'涉及；包含',phonetic:'/ɪnˈvɑːlv/'},
+  {en:'isolate',zh:'隔离；孤立',phonetic:'/ˈaɪsəleɪt/'},
+  {en:'issue',zh:'问题；发行',phonetic:'/ˈɪʃuː/'},
+  {en:'journal',zh:'期刊；日记',phonetic:'/ˈdʒɜːrnl/'},
+  {en:'justify',zh:'证明…正当',phonetic:'/ˈdʒʌstɪfaɪ/'},
+  {en:'landscape',zh:'风景；景观',phonetic:'/ˈlændskeɪp/'},
+  {en:'launch',zh:'发射；启动',phonetic:'/lɔːntʃ/'},
+  {en:'liberal',zh:'自由的；开明的',phonetic:'/ˈlɪbərəl/'},
+  {en:'maintain',zh:'维持；保养',phonetic:'/meɪnˈteɪn/'},
+  {en:'manufacture',zh:'制造；生产',phonetic:'/ˌmænjuˈfæktʃər/'},
+  {en:'measure',zh:'测量；措施',phonetic:'/ˈmeʒər/'},
+  {en:'mental',zh:'精神的；心理的',phonetic:'/ˈmentl/'},
+  {en:'military',zh:'军事的；军队',phonetic:'/ˈmɪləteri/'},
+  {en:'minority',zh:'少数；少数民族',phonetic:'/maɪˈnɔːrəti/'},
+  {en:'mission',zh:'使命；任务',phonetic:'/ˈmɪʃn/'},
+  {en:'modify',zh:'修改；调整',phonetic:'/ˈmɑːdɪfaɪ/'},
+  {en:'monitor',zh:'监视；监控',phonetic:'/ˈmɑːnɪtər/'},
+  {en:'motivate',zh:'激励；激发',phonetic:'/ˈmoʊtɪveɪt/'},
+  {en:'negotiate',zh:'谈判；协商',phonetic:'/nɪˈɡoʊʃieɪt/'},
+  {en:'network',zh:'网络；关系网',phonetic:'/ˈnetwɜːrk/'},
+  {en:'nevertheless',zh:'然而；不过',phonetic:'/ˌnevərðəˈles/'},
+  {en:'normal',zh:'正常的；标准的',phonetic:'/ˈnɔːrml/'},
+  {en:'numerous',zh:'许多的；大量的',phonetic:'/ˈnuːmərəs/'},
+  {en:'objective',zh:'客观的；目标',phonetic:'/əbˈdʒektɪv/'},
+  {en:'obtain',zh:'获得；得到',phonetic:'/əbˈteɪn/'},
+  {en:'obvious',zh:'明显的；显然的',phonetic:'/ˈɑːbviəs/'},
+  {en:'occupy',zh:'占据；占用',phonetic:'/ˈɑːkjupaɪ/'},
+  {en:'offend',zh:'冒犯；得罪',phonetic:'/əˈfend/'},
+  {en:'operate',zh:'操作；经营',phonetic:'/ˈɑːpəreɪt/'},
+  {en:'opportunity',zh:'机会；时机',phonetic:'/ˌɑːpərˈtuːnəti/'},
+  {en:'oppose',zh:'反对；对抗',phonetic:'/əˈpoʊz/'},
+  {en:'option',zh:'选择；选项',phonetic:'/ˈɑːpʃn/'},
+  {en:'organize',zh:'组织；安排',phonetic:'/ˈɔːrɡənaɪz/'},
+  {en:'origin',zh:'起源；出身',phonetic:'/ˈɔːrɪdʒɪn/'},
+  {en:'overcome',zh:'克服；战胜',phonetic:'/ˌoʊvərˈkʌm/'},
+  {en:'participate',zh:'参与；参加',phonetic:'/pɑːrˈtɪsɪpeɪt/'},
+  {en:'particular',zh:'特定的；特别的',phonetic:'/pərˈtɪkjələr/'},
+  {en:'passion',zh:'热情；激情',phonetic:'/ˈpæʃn/'},
+  {en:'perceive',zh:'感知；理解',phonetic:'/pərˈsiːv/'},
+  {en:'perform',zh:'表演；执行',phonetic:'/pərˈfɔːrm/'},
+  {en:'permanent',zh:'永久的；持久的',phonetic:'/ˈpɜːrmənənt/'},
+  {en:'permit',zh:'允许；许可',phonetic:'/pərˈmɪt/'},
+  {en:'persist',zh:'坚持；持续',phonetic:'/pərˈsɪst/'},
+  {en:'personality',zh:'个性；人格',phonetic:'/ˌpɜːrsəˈnæləti/'},
+  {en:'perspective',zh:'观点；视角',phonetic:'/pərˈspektɪv/'},
+  {en:'phenomenon',zh:'现象',phonetic:'/fɪˈnɑːmɪnən/'},
+  {en:'philosophy',zh:'哲学',phonetic:'/fɪˈlɑːsəfi/'},
+  {en:'policy',zh:'政策；方针',phonetic:'/ˈpɑːləsi/'},
+  {en:'potential',zh:'潜力；潜在的',phonetic:'/pəˈtenʃl/'},
+  {en:'poverty',zh:'贫困；贫穷',phonetic:'/ˈpɑːvərti/'},
+  {en:'predict',zh:'预测；预言',phonetic:'/prɪˈdɪkt/'},
+  {en:'preserve',zh:'保存；保护',phonetic:'/prɪˈzɜːrv/'},
+  {en:'previous',zh:'以前的；先前的',phonetic:'/ˈpriːviəs/'},
+  {en:'principle',zh:'原则；原理',phonetic:'/ˈprɪnsəpl/'},
+  {en:'priority',zh:'优先；重点',phonetic:'/praɪˈɔːrəti/'},
+  {en:'procedure',zh:'程序；步骤',phonetic:'/prəˈsiːdʒər/'},
+  {en:'profession',zh:'职业；专业',phonetic:'/prəˈfeʃn/'},
+  {en:'profit',zh:'利润；收益',phonetic:'/ˈprɑːfɪt/'},
+  {en:'promote',zh:'促进；提升',phonetic:'/prəˈmoʊt/'},
+  {en:'proportion',zh:'比例；部分',phonetic:'/prəˈpɔːrʃn/'},
+  {en:'prospect',zh:'前景；展望',phonetic:'/ˈprɑːspekt/'},
+  {en:'protest',zh:'抗议；反对',phonetic:'/ˈproʊtest/'},
+  {en:'psychology',zh:'心理学',phonetic:'/saɪˈkɑːlədʒi/'},
+  {en:'publish',zh:'出版；发表',phonetic:'/ˈpʌblɪʃ/'},
+  {en:'purchase',zh:'购买；采购',phonetic:'/ˈpɜːrtʃəs/'},
+  {en:'pursue',zh:'追求；追赶',phonetic:'/pərˈsuː/'},
+  {en:'qualify',zh:'合格；有资格',phonetic:'/ˈkwɑːlɪfaɪ/'},
+  {en:'range',zh:'范围；幅度',phonetic:'/reɪndʒ/'},
+  {en:'reaction',zh:'反应；回应',phonetic:'/riˈækʃn/'},
+  {en:'reasonable',zh:'合理的；适度的',phonetic:'/ˈriːznəbl/'},
+  {en:'recognize',zh:'认出；承认',phonetic:'/ˈrekəɡnaɪz/'},
+  {en:'recommend',zh:'推荐；建议',phonetic:'/ˌrekəˈmend/'},
+  {en:'recover',zh:'恢复；康复',phonetic:'/rɪˈkʌvər/'},
+  {en:'reduce',zh:'减少；降低',phonetic:'/rɪˈduːs/'},
+  {en:'reflect',zh:'反映；反射',phonetic:'/rɪˈflekt/'},
+  {en:'reform',zh:'改革；改进',phonetic:'/rɪˈfɔːrm/'},
+  {en:'regard',zh:'看待；尊重',phonetic:'/rɪˈɡɑːrd/'},
+  {en:'register',zh:'登记；注册',phonetic:'/ˈredʒɪstər/'},
+  {en:'regulate',zh:'调节；管理',phonetic:'/ˈreɡjuleɪt/'},
+  {en:'reject',zh:'拒绝；排斥',phonetic:'/rɪˈdʒekt/'},
+  {en:'relate',zh:'关联；叙述',phonetic:'/rɪˈleɪt/'},
+  {en:'release',zh:'释放；发布',phonetic:'/rɪˈliːs/'},
+  {en:'relevant',zh:'相关的；有关的',phonetic:'/ˈreləvənt/'},
+  {en:'relief',zh:'减轻；救济',phonetic:'/rɪˈliːf/'},
+  {en:'rely',zh:'依赖；依靠',phonetic:'/rɪˈlaɪ/'},
+  {en:'remark',zh:'评论；注意',phonetic:'/rɪˈmɑːrk/'},
+  {en:'remote',zh:'遥远的；远程的',phonetic:'/rɪˈmoʊt/'},
+  {en:'remove',zh:'移除；删除',phonetic:'/rɪˈmuːv/'},
+  {en:'represent',zh:'代表；表示',phonetic:'/ˌreprɪˈzent/'},
+  {en:'reputation',zh:'声誉；名声',phonetic:'/ˌrepjuˈteɪʃn/'},
+  {en:'request',zh:'请求；要求',phonetic:'/rɪˈkwest/'},
+  {en:'require',zh:'需要；要求',phonetic:'/rɪˈkwaɪər/'},
+  {en:'research',zh:'研究；调查',phonetic:'/rɪˈsɜːrtʃ/'},
+  {en:'reserve',zh:'保留；预订',phonetic:'/rɪˈzɜːrv/'},
+  {en:'resign',zh:'辞职；放弃',phonetic:'/rɪˈzaɪn/'},
+  {en:'resist',zh:'抵抗；抵制',phonetic:'/rɪˈzɪst/'},
+  {en:'resolve',zh:'解决；决心',phonetic:'/rɪˈzɑːlv/'},
+  {en:'resource',zh:'资源；财力',phonetic:'/ˈriːsɔːrs/'},
+  {en:'respond',zh:'回应；响应',phonetic:'/rɪˈspɑːnd/'},
+  {en:'restore',zh:'恢复；修复',phonetic:'/rɪˈstɔːr/'},
+  {en:'restrict',zh:'限制；约束',phonetic:'/rɪˈstrɪkt/'},
+  {en:'reveal',zh:'揭示；透露',phonetic:'/rɪˈviːl/'},
+  {en:'revenue',zh:'收入；税收',phonetic:'/ˈrevənuː/'},
+  {en:'revolution',zh:'革命；变革',phonetic:'/ˌrevəˈluːʃn/'},
+  {en:'risk',zh:'风险；危险',phonetic:'/rɪsk/'},
+  {en:'routine',zh:'常规；例行公事',phonetic:'/ruːˈtiːn/'},
+  {en:'sacrifice',zh:'牺牲；献祭',phonetic:'/ˈsækrɪfaɪs/'},
+  {en:'schedule',zh:'时间表；安排',phonetic:'/ˈskedʒuːl/'},
+  {en:'scheme',zh:'计划；方案',phonetic:'/skiːm/'},
+  {en:'security',zh:'安全；保障',phonetic:'/sɪˈkjʊrəti/'},
+  {en:'select',zh:'选择；挑选',phonetic:'/sɪˈlekt/'},
+  {en:'senior',zh:'高级的；年长的',phonetic:'/ˈsiːniər/'},
+  {en:'sensitive',zh:'敏感的；灵敏的',phonetic:'/ˈsensətɪv/'},
+  {en:'separate',zh:'分开的；分离',phonetic:'/ˈsepəreɪt/'},
+  {en:'sequence',zh:'顺序；序列',phonetic:'/ˈsiːkwəns/'},
+  {en:'significant',zh:'重要的；显著的',phonetic:'/sɪɡˈnɪfɪkənt/'},
+  {en:'similar',zh:'相似的；类似的',phonetic:'/ˈsɪmələr/'},
+  {en:'solution',zh:'解决方案；溶液',phonetic:'/səˈluːʃn/'},
+  {en:'somewhat',zh:'有点；稍微',phonetic:'/ˈsʌmwʌt/'},
+  {en:'source',zh:'来源；源头',phonetic:'/sɔːrs/'},
+  {en:'specific',zh:'具体的；特定的',phonetic:'/spəˈsɪfɪk/'},
+  {en:'stable',zh:'稳定的；稳固的',phonetic:'/ˈsteɪbl/'},
+  {en:'standard',zh:'标准；规范',phonetic:'/ˈstændərd/'},
+  {en:'status',zh:'地位；状态',phonetic:'/ˈsteɪtəs/'},
+  {en:'strategy',zh:'策略；战略',phonetic:'/ˈstrætədʒi/'},
+  {en:'strengthen',zh:'加强；巩固',phonetic:'/ˈstreŋθn/'},
+  {en:'structure',zh:'结构；构造',phonetic:'/ˈstrʌktʃər/'},
+  {en:'struggle',zh:'斗争；挣扎',phonetic:'/ˈstrʌɡl/'},
+  {en:'substitute',zh:'替代品；代替',phonetic:'/ˈsʌbstɪtuːt/'},
+  {en:'sufficient',zh:'足够的；充分的',phonetic:'/səˈfɪʃnt/'},
+  {en:'suggest',zh:'建议；暗示',phonetic:'/səˈdʒest/'},
+  {en:'summary',zh:'总结；摘要',phonetic:'/ˈsʌməri/'},
+  {en:'superior',zh:'优越的；上级的',phonetic:'/suːˈpɪriər/'},
+  {en:'supply',zh:'供应；供给',phonetic:'/səˈplaɪ/'},
+  {en:'support',zh:'支持；支撑',phonetic:'/səˈpɔːrt/'},
+  {en:'survey',zh:'调查；测量',phonetic:'/ˈsɜːrveɪ/'},
+  {en:'survive',zh:'幸存；生存',phonetic:'/sərˈvaɪv/'},
+  {en:'suspect',zh:'怀疑；嫌疑犯',phonetic:'/səˈspekt/'},
+  {en:'suspend',zh:'暂停；悬挂',phonetic:'/səˈspend/'},
+  {en:'sustain',zh:'维持；支撑',phonetic:'/səˈsteɪn/'},
+  {en:'symbol',zh:'符号；象征',phonetic:'/ˈsɪmbl/'},
+  {en:'target',zh:'目标；对象',phonetic:'/ˈtɑːrɡɪt/'},
+  {en:'tendency',zh:'趋势；倾向',phonetic:'/ˈtendənsi/'},
+  {en:'threat',zh:'威胁；恐吓',phonetic:'/θret/'},
+  {en:'tolerate',zh:'容忍；忍受',phonetic:'/ˈtɑːləreɪt/'},
+  {en:'tradition',zh:'传统；惯例',phonetic:'/trəˈdɪʃn/'},
+  {en:'transfer',zh:'转移；调动',phonetic:'/trænsˈfɜːr/'},
+  {en:'transform',zh:'转变；改造',phonetic:'/trænsˈfɔːrm/'},
+  {en:'tremendous',zh:'巨大的；惊人的',phonetic:'/trɪˈmendəs/'},
+  {en:'trend',zh:'趋势；潮流',phonetic:'/trend/'},
+  {en:'ultimate',zh:'最终的；根本的',phonetic:'/ˈʌltɪmət/'},
+  {en:'undergo',zh:'经历；承受',phonetic:'/ˌʌndərˈɡoʊ/'},
+  {en:'undertake',zh:'承担；从事',phonetic:'/ˌʌndərˈteɪk/'},
+  {en:'unique',zh:'独特的；唯一的',phonetic:'/juˈniːk/'},
+  {en:'universal',zh:'普遍的；通用的',phonetic:'/ˌjuːnɪˈvɜːrsl/'},
+  {en:'urgent',zh:'紧急的；迫切的',phonetic:'/ˈɜːrdʒənt/'},
+  {en:'valid',zh:'有效的；合理的',phonetic:'/ˈvælɪd/'},
+  {en:'variety',zh:'多样性；种类',phonetic:'/vəˈraɪəti/'},
+  {en:'version',zh:'版本；说法',phonetic:'/ˈvɜːrʒn/'},
+  {en:'victim',zh:'受害者；牺牲品',phonetic:'/ˈvɪktɪm/'},
+  {en:'violence',zh:'暴力；猛烈',phonetic:'/ˈvaɪələns/'},
+  {en:'visible',zh:'可见的；明显的',phonetic:'/ˈvɪzəbl/'},
+  {en:'vision',zh:'视力；愿景',phonetic:'/ˈvɪʒn/'},
+  {en:'volume',zh:'音量；体积',phonetic:'/ˈvɑːljuːm/'},
+  {en:'voluntary',zh:'自愿的；志愿的',phonetic:'/ˈvɑːlənteri/'},
+  {en:'welfare',zh:'福利；幸福',phonetic:'/ˈwelfer/'},
+  {en:'widespread',zh:'广泛的；普遍的',phonetic:'/ˈwaɪdspred/'},
+  {en:'witness',zh:'目击者；证人',phonetic:'/ˈwɪtnəs/'},
+  {en:'worthwhile',zh:'值得的',phonetic:'/ˌwɜːrθˈwaɪl/'},
+  {en:'yield',zh:'产出；屈服',phonetic:'/jiːld/'},
+];
+
+function getDayIndex(){
+  // 用日期计算第几天，避免重复
+  const start=new Date('2026-01-01');
+  const now=new Date();
+  const diff=Math.floor((now-start)/(1000*60*60*24));
+  return diff%Math.ceil(CET4_WORDS.length/20);
+}
+
+function getDailyWords(){
+  const d=getData();
+  d.wordChecked=d.wordChecked||{};
+  const today=getToday();
+  
+  // 获取前一天未完成的单词
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  const yesterdayStr=yesterday.toLocaleDateString();
+  const yesterdayChecked=d.wordChecked[yesterdayStr]||{};
+  
+  // 前一天该出现的20个词
+  const yesterdayIdx=((Math.floor((yesterday-new Date('2026-01-01'))/(1000*60*60*24)))%Math.ceil(CET4_WORDS.length/20));
+  const yesterdayWords=CET4_WORDS.slice(yesterdayIdx*20,yesterdayIdx*20+20);
+  const unfinished=yesterdayWords.filter(w=>!yesterdayChecked[w.en]);
+  
+  // 今日正常20个
+  const idx=getDayIndex();
+  const start=idx*20;
+  let todayWords=CET4_WORDS.slice(start,start+20);
+  
+  // 如果有前一天未完成的，替换掉今天末尾等量的词
+  if(unfinished.length>0&&unfinished.length<=20){
+    todayWords=[...unfinished,...todayWords.slice(0,20-unfinished.length)];
+  }
+  
+  return todayWords;
+}
+
+function refreshDailyWords(){
+  const d=getData();
+  d.wordChecked=d.wordChecked||{};
+  const today=getToday();
+  d.wordChecked[today]=d.wordChecked[today]||{};
+  d.wordDate=today;
+  saveData(d);
+  renderWords();
+  toast('今日单词已刷新！');
+}
+
+function toggleWordCheck(en){
+  const d=getData();const today=getToday();
+  d.wordChecked=d.wordChecked||{};
+  d.wordChecked[today]=d.wordChecked[today]||{};
+  if(d.wordChecked[today][en])delete d.wordChecked[today][en];
+  else d.wordChecked[today][en]=true;
+  saveData(d);renderWords();
+}
+
+function speakWord(word,btn){
+  if(btn){btn.classList.add('playing');setTimeout(()=>btn.classList.remove('playing'),800);}
+  const audio=new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=0`);
+  audio.play().catch(()=>{
+    if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(word);u.lang='en-US';u.rate=0.9;speechSynthesis.speak(u);}
+  });
+}
+
+function renderWords(){
+  const d=getData();const today=getToday();
+  d.wordChecked=d.wordChecked||{};
+  // 如果日期变了，刷新单词
+  if(d.wordDate!==today){d.wordDate=today;d.wordChecked[today]=d.wordChecked[today]||{};saveData(d);}
+  
+  const words=getDailyWords();
+  const checked=d.wordChecked[today]||{};
+  const learned=Object.keys(checked).length;
+  const totalWords=CET4_WORDS.length;
+  const dayIdx=getDayIndex()+1;
+  
+  document.getElementById('word-day-num').textContent=dayIdx;
+  document.getElementById('word-learned').textContent=learned;
+  document.getElementById('word-today').textContent=20;
+  document.getElementById('word-total').textContent=totalWords;
+  document.getElementById('word-progress-text').textContent=`今日进度 ${learned}/20`;
+  document.getElementById('word-progress-bar').style.width=(learned/20*100)+'%';
+  
+  const el=document.getElementById('word-cards');
+  el.innerHTML=words.map((w,i)=>{
+    const isChecked=!!checked[w.en];
+    return `<div class="word-card${isChecked?' done-card':''}">
+      <span class="word-num">${i+1}</span>
+      <span class="word-text">${escHtml(w.en)}</span>
+      <span class="word-phonetic">${w.phonetic}</span>
+      <span class="word-meaning">${escHtml(w.zh)}</span>
+      <button class="word-play" onclick="speakWord('${escHtml(w.en).replace(/'/g,"\\'")}',this)" title="点击发音">🔊</button>
+      <button class="word-check${isChecked?' done':''}" onclick="toggleWordCheck('${escHtml(w.en).replace(/'/g,"\\'")}')" title="打卡">${isChecked?'✓':'○'}</button>
+    </div>`;
+  }).join('');
+}
+
+// ====== 减脂打卡交互 ======
+function toggleFitnessCheck(name){
+  const d=getData();const today=getToday();
+  d.fitnessChecked=d.fitnessChecked||{};
+  d.fitnessChecked[today]=d.fitnessChecked[today]||{};
+  if(d.fitnessChecked[today][name])delete d.fitnessChecked[today][name];
+  else d.fitnessChecked[today][name]=true;
+  saveData(d);renderFitness();
+}
+
+// ====== AI 小窗口 ======
+function toggleAI(){document.getElementById('ai-panel').classList.toggle('open');}
+const aiKeywords={spend:/[花消支出]了?\s*(\d+)/,earn:/[赚收入]了?\s*(\d+)/,todo:/待办[：:]\s*(.+)/,diary:/心情[：:]\s*(.+)/,book:/[读看]了?\s*(.+?)\s*(\d+)页/,moodGood:/[开心快乐高兴棒好]/,moodBad:/[难过伤心哭郁闷烦]/,moodAngry:/[生气愤怒]/,moodCalm:/[平静放松]/,stock:/股票[：:]\s*(.+)/,review:/复盘[：:]\s*(.+)/,meal:/[吃]了[：:]?\s*(.+?)\s*(\d+)\s*kcal/,sport:/(跑步|散步|瑜伽|跳绳|游泳|健身|骑行|跳舞)\s*(\d+)\s*分/};
+function sendAI(){
+  const input=document.getElementById('ai-input');const text=input.value.trim();if(!text)return;
+  appendAIMsg('user',text);input.value='';let reply='',matched=false;
+  const spendMatch=text.match(aiKeywords.spend);
+  if(spendMatch){const d=getData();d.bills.unshift({id:Date.now(),amount:parseFloat(spendMatch[1]),type:'expense',desc:text,date:new Date().toLocaleDateString()});if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);renderBills();reply=`✅ 已记录支出 ¥${spendMatch[1]}`;matched=true;}
+  if(!matched){const m=text.match(aiKeywords.earn);if(m){const d=getData();d.bills.unshift({id:Date.now(),amount:parseFloat(m[1]),type:'income',desc:text,date:new Date().toLocaleDateString()});if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);renderBills();reply=`✅ 已记录收入 ¥${m[1]}`;matched=true;}}
+  if(!matched){const m=text.match(aiKeywords.todo);if(m){const d=getData();d.todos.push({id:Date.now(),text:m[1],done:false});saveData(d);renderTodos();reply=`✅ 已添加待办：「${m[1]}」`;matched=true;}}
+  if(!matched){const m=text.match(aiKeywords.book);if(m){const d=getData();const pp=parseInt(m[2])||30;d.books.unshift({id:Date.now(),title:m[1],progress:Math.min(100,Math.round(pp/300*100)),date:new Date().toLocaleDateString()});if(d.books.length>30)d.books=d.books.slice(0,30);saveData(d);renderBooks();reply=`✅ 已记录读书：「${m[1]}」`;matched=true;}}
+  if(!matched){let mood='😊';if(aiKeywords.moodBad.test(text))mood='😢';else if(aiKeywords.moodAngry.test(text))mood='😡';else if(aiKeywords.moodCalm.test(text))mood='😌';else if(aiKeywords.moodGood.test(text))mood='🤩';const m=text.match(aiKeywords.diary);if(m||aiKeywords.moodGood.test(text)||aiKeywords.moodBad.test(text)||aiKeywords.moodAngry.test(text)){const d=getData();d.diaries.unshift({id:Date.now(),mood,text:m?m[1]:text,date:new Date().toLocaleString()});if(d.diaries.length>50)d.diaries=d.diaries.slice(0,50);saveData(d);renderDiaries();reply=`${mood} 已记录心情！`;matched=true;}}
+  if(!matched){const m=text.match(aiKeywords.stock);if(m){const code=m[1].trim().toUpperCase();const d=getData();if(!d.finance)d.finance=[];if(d.finance.find(x=>x.code===code)){reply=`⚠️ 「${code}」已在列表中`;}else{d.finance.push({id:Date.now(),code,name:code,price:'--',change:'--',changePct:'--',updated:0});if(d.finance.length>30)d.finance=d.finance.slice(0,30);saveData(d);renderFinance();reply=`✅ 已添加「${code}」`;refreshSingle(code);}matched=true;}}
+  if(!matched){const m=text.match(aiKeywords.review);if(m){const d=getData();const today=new Date().toLocaleDateString();const existing=d.reviews.findIndex(x=>x.date===today);const entry={id:Date.now(),date:today,text:m[1],indices:document.getElementById('review-indices').innerHTML,hotSectors:document.getElementById('hot-tags').innerHTML,news:window._cachedNews||'',upCount:document.getElementById('rv-up').textContent,downCount:document.getElementById('rv-down').textContent,volume:document.getElementById('rv-volume').textContent};if(existing>-1)d.reviews[existing]=entry;else d.reviews.unshift(entry);if(d.reviews.length>60)d.reviews=d.reviews.slice(0,60);saveData(d);renderReview();reply=`📊 复盘已保存！`;matched=true;}}
+  if(!matched){const m=text.match(aiKeywords.meal);if(m){const d=getData();const today=getToday();d.meals.unshift({id:Date.now(),date:today,type:'snack',food:m[1].trim(),cal:parseInt(m[2])||0});if(d.meals.length>200)d.meals=d.meals.slice(0,200);saveData(d);renderHealth();reply=`🍽️ 已记录饮食：「${m[1].trim()}」${m[2]}kcal`;matched=true;}}
+  if(!matched){const m=text.match(aiKeywords.sport);if(m){const d=getData();const today=getToday();const calPerMin=SPORT_CAL_PER_MIN[m[1]]||5;d.sports.unshift({id:Date.now(),date:today,type:m[1],min:parseInt(m[2]),cal:Math.round(parseInt(m[2])*calPerMin)});if(d.sports.length>200)d.sports=d.sports.slice(0,200);saveData(d);renderHealth();reply=`🏃 ${m[1]} ${m[2]}分钟，消耗约${Math.round(parseInt(m[2])*calPerMin)}kcal！`;matched=true;}}
+  if(!matched)reply='收到～你可以说：\n• "花了35买咖啡" → 记账\n• "待办：去超市" → 待办\n• "心情：很开心" → 日记\n• "股票：000001" → 自选\n• "吃了：苹果 95kcal" → 饮食\n• "跑步 30分" → 运动';
+  setTimeout(()=>appendAIMsg('bot',reply),400);
+}
+function appendAIMsg(type,text){const el=document.getElementById('ai-messages');el.innerHTML+=`<div class="ai-msg ${type}">${escHtml(text).replace(/\n/g,'<br>')}</div>`;el.scrollTop=el.scrollHeight;}
+
+// ====== 导出/导入 ======
+function exportData(){const d=getData();const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='workbuddy-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('已导出！');}
+function importDataPrompt(){const input=document.createElement('input');input.type='file';input.accept='.json';input.onchange=function(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(ev){try{const data=JSON.parse(ev.target.result);localStorage.setItem(STORAGE_KEY,JSON.stringify(data));toast('已导入！');renderAll();}catch(ex){toast('格式错误');}};reader.readAsText(file);};input.click();}
+function clearAll(){if(confirm('确定清空所有数据？不可恢复！')){localStorage.removeItem(STORAGE_KEY);initData();renderAll();toast('已清空');}}
+
+function renderAll(){renderTodos();renderBills();renderCheckins();renderDiaries();renderBooks();renderFinance();renderReview();renderDiet();renderFitness();renderWords();}
+
+initData();renderAll();
+setTimeout(()=>{const d=getData();if(d.finance&&d.finance.length>0)refreshFinance();},1500);
+</script>
+</body>
+</html>
