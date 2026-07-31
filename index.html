@@ -112,13 +112,20 @@ body{
   top:12px;
   left:12px;
   z-index:60;
-  width:36px;height:36px;
-  border-radius:8px;
+  width:40px;height:40px;
+  border-radius:10px;
   background:var(--accent);
   color:#fff;
   border:none;
-  font-size:1.1rem;
+  font-size:1.2rem;
   cursor:pointer;
+  box-shadow:0 2px 12px rgba(242,160,182,0.4);
+}
+/* PWA全屏时，safe-area适配 */
+@supports(padding-top:env(safe-area-inset-top)){
+  .sidebar-toggle{top:calc(12px + env(safe-area-inset-top))}
+  .main{padding-top:calc(56px + env(safe-area-inset-top))}
+  .sidebar{padding-top:env(safe-area-inset-top)}
 }
 /* ====== 主内容区 ====== */
 .main{
@@ -607,7 +614,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 </aside>
 
 <!-- ====== 主内容区 ====== -->
-<main class="main" id="main-content">
+<main class="main" id="main-content" onclick="if(window.innerWidth<=768)document.querySelector('.sidebar').classList.remove('open')">
   <div class="main-header">
     <h1 id="panel-header-title">✅ 每日待办</h1>
     <p id="panel-header-desc">管理你的每日任务清单</p>
