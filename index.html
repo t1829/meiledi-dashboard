@@ -2309,35 +2309,28 @@ function sendAI(){
   const input=document.getElementById('ai-input');const text=input.value.trim();if(!text)return;
   appendAIMsg('user',text);input.value='';let reply='',matched=false;
   
-  // ====== 切片指令识别 ======
-  if(text.startsWith('切片')){
-    const clipText=text.replace(/^切片/, '').trim();
-    if(!clipText||clipText.length<30){
-      reply='✂️ 切片格式：切片+粘贴直播文字稿（至少30字）\n\n示例：\n切片张诗婷：我觉得女生一定要清醒，不要被甜言蜜语冲昏头。他嘴上说爱你，行动上什么都不做，这就是在消耗你...';
-    }else{
-      // 自动生成切片物料
-      const result=generateClipFromText(clipText,'auto');
-      // 渲染到切片工坊面板
-      const area=document.getElementById('clip-result-area');
-      if(area){area.innerHTML=result.html;area.scrollIntoView({behavior:'smooth'});}
-      // 自动保存到历史
-      const d=getData();
-      const today=new Date().toLocaleDateString();
-      const now=new Date().toLocaleTimeString();
-      d.clips.unshift({id:Date.now(),date:today,time:now,script:clipText.substring(0,80),html:result.html});
-      if(d.clips.length>50)d.clips=d.clips.slice(0,50);
-      saveData(d);renderClipHistory();
-      // 自动切换到切片工坊面板
-      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-      document.querySelector('.nav-item[data-panel="clip"]').classList.add('active');
-      document.querySelectorAll('.module-panel').forEach(p=>p.classList.remove('active'));
-      document.getElementById('panel-clip').classList.add('active');
-      document.getElementById('panel-header-title').textContent=panelInfo.clip.title;
-      document.getElementById('panel-header-desc').textContent=panelInfo.clip.desc;
-      document.querySelector('.sidebar').classList.remove('open');
-      // AI回复完整物料文本
-      reply=result.text+'\n\n💡 已自动保存到【切片工坊】历史记录。';
-    }
+  // ====== 智能识别：长文本自动触发切片生成 ======
+  // 检测条件：文本超过50字 且 包含情感/直播类关键词
+  const clipKeywords=['女生','男人','恋爱','分手','结婚','感情','渣男','清醒','独立','自己','现实','婚姻','内耗','不值得','前任','出轨','暧昧','老公','男朋友','彩礼','家庭','婆婆','孩子','年龄','外貌','身材','事业','钱','经济','能力','成长','成熟','爱自己','套路','谎言','哭','后悔','纠缠','放下','走出来','失恋','难过','痛苦','别傻','闺蜜'];
+  const isClipText=text.length>50 && clipKeywords.some(k=>text.includes(k));
+  if(isClipText){
+    const result=generateClipFromText(text,'auto');
+    const area=document.getElementById('clip-result-area');
+    if(area){area.innerHTML=result.html;area.scrollIntoView({behavior:'smooth'});}
+    const d=getData();
+    const today=new Date().toLocaleDateString();
+    const now=new Date().toLocaleTimeString();
+    d.clips.unshift({id:Date.now(),date:today,time:now,script:text.substring(0,80),html:result.html});
+    if(d.clips.length>50)d.clips=d.clips.slice(0,50);
+    saveData(d);renderClipHistory();
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+    document.querySelector('.nav-item[data-panel="clip"]').classList.add('active');
+    document.querySelectorAll('.module-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-clip').classList.add('active');
+    document.getElementById('panel-header-title').textContent=panelInfo.clip.title;
+    document.getElementById('panel-header-desc').textContent=panelInfo.clip.desc;
+    document.querySelector('.sidebar').classList.remove('open');
+    reply=result.text+'\n\n💡 已自动保存到【切片工坊】历史记录。';
     matched=true;
   }
   const spendMatch=text.match(aiKeywords.spend);
@@ -2350,7 +2343,7 @@ function sendAI(){
   if(!matched){const m=text.match(aiKeywords.review);if(m){const d=getData();const today=new Date().toLocaleDateString();const existing=d.reviews.findIndex(x=>x.date===today);const entry={id:Date.now(),date:today,text:m[1],indices:document.getElementById('review-indices').innerHTML,hotSectors:document.getElementById('hot-tags').innerHTML,news:window._cachedNews||'',upCount:document.getElementById('rv-up').textContent,downCount:document.getElementById('rv-down').textContent,volume:document.getElementById('rv-volume').textContent};if(existing>-1)d.reviews[existing]=entry;else d.reviews.unshift(entry);if(d.reviews.length>60)d.reviews=d.reviews.slice(0,60);saveData(d);renderReview();reply=`📊 复盘已保存！`;matched=true;}}
   if(!matched){const m=text.match(aiKeywords.meal);if(m){const d=getData();const today=getToday();d.meals.unshift({id:Date.now(),date:today,type:'snack',food:m[1].trim(),cal:parseInt(m[2])||0});if(d.meals.length>200)d.meals=d.meals.slice(0,200);saveData(d);renderHealth();reply=`🍽️ 已记录饮食：「${m[1].trim()}」${m[2]}kcal`;matched=true;}}
   if(!matched){const m=text.match(aiKeywords.sport);if(m){const d=getData();const today=getToday();const calPerMin=SPORT_CAL_PER_MIN[m[1]]||5;d.sports.unshift({id:Date.now(),date:today,type:m[1],min:parseInt(m[2]),cal:Math.round(parseInt(m[2])*calPerMin)});if(d.sports.length>200)d.sports=d.sports.slice(0,200);saveData(d);renderHealth();reply=`🏃 ${m[1]} ${m[2]}分钟，消耗约${Math.round(parseInt(m[2])*calPerMin)}kcal！`;matched=true;}}
-  if(!matched)reply='收到～你可以说：\n• "花了35买咖啡" → 记账\n• "待办：去超市" → 待办\n• "心情：很开心" → 日记\n• "股票：000001" → 自选\n• "吃了：苹果 95kcal" → 饮食\n• "跑步 30分" → 运动\n• "切片+直播文稿" → 切片物料';
+  if(!matched)reply='收到～你可以说：\n• "花了35买咖啡" → 记账\n• "待办：去超市" → 待办\n• "心情：很开心" → 日记\n• "股票：000001" → 自选\n• "吃了：苹果 95kcal" → 饮食\n• "跑步 30分" → 运动\n• 直接粘贴直播文稿 → 自动切片';
   setTimeout(()=>appendAIMsg('bot',reply),400);
 }
 function appendAIMsg(type,text){const el=document.getElementById('ai-messages');el.innerHTML+=`<div class="ai-msg ${type}">${escHtml(text).replace(/\n/g,'<br>')}</div>`;el.scrollTop=el.scrollHeight;}
