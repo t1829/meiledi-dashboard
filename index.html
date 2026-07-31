@@ -496,6 +496,66 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   font-size:0.78rem;font-weight:700;color:var(--accent);
   margin:10px 0 6px;padding-bottom:4px;border-bottom:1px dashed var(--border);
 }
+/* 短视频切片工坊 */
+.clip-textarea{
+  width:100%;min-height:120px;border:2px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px;font-size:0.75rem;
+  background:#fff;color:var(--text);resize:vertical;
+  font-family:inherit;line-height:1.6;
+}
+.clip-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(242,160,182,0.15)}
+.clip-input{
+  width:100%;border:2px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 10px;font-size:0.75rem;background:#fff;color:var(--text);
+  font-family:inherit;
+}
+.clip-input:focus{outline:none;border-color:var(--accent)}
+.clip-result-card{
+  background:linear-gradient(135deg,#fff,#fff5f7);
+  border-radius:var(--radius);padding:12px;margin-bottom:10px;
+  border:1px solid var(--border);font-size:0.73rem;line-height:1.5;
+}
+.clip-result-card .clip-section{
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed #fde8ef;
+}
+.clip-result-card .clip-section:last-child{border-bottom:none;margin-bottom:0}
+.clip-result-card .clip-label{
+  font-weight:700;color:var(--accent);font-size:0.72rem;margin-bottom:3px;display:flex;align-items:center;gap:4px
+}
+.clip-result-card .clip-hl{
+  background:linear-gradient(180deg,transparent 60%,#ffd4e0 60%);
+  font-weight:700;padding:0 2px;
+}
+.clip-result-card .clip-title-opt{
+  display:inline-block;padding:3px 10px;margin:2px 4px;
+  background:#fff0f4;border-radius:12px;font-weight:600;
+  font-size:0.7rem;color:var(--accent);
+}
+.clip-result-card .clip-tag{
+  display:inline-block;padding:2px 8px;margin:2px 3px;
+  background:var(--accent);color:#fff;border-radius:10px;
+  font-size:0.65rem;font-weight:600;
+}
+.clip-script-line{
+  padding:3px 0;display:flex;gap:6px;align-items:flex-start;
+}
+.clip-script-line .clip-ts{
+  min-width:42px;color:var(--accent);font-weight:700;font-size:0.65rem;
+  background:#fff0f4;text-align:center;border-radius:4px;padding:1px 4px;
+}
+.clip-script-line .clip-txt{flex:1;font-size:0.72rem}
+.clip-script-line .clip-golden{
+  color:#e74c3c;font-weight:700;
+  background:linear-gradient(180deg,transparent 60%,#ffe0e0 60%);
+  padding:0 3px;
+}
+.clip-history-item{
+  padding:8px 10px;margin-bottom:5px;border-radius:var(--radius-sm);
+  background:var(--bg);font-size:0.72rem;cursor:pointer;
+  border-left:3px solid var(--accent);transition:var(--transition);
+}
+.clip-history-item:hover{background:#fff0f4}
+.clip-history-item .clip-h-date{color:var(--text2);font-size:0.62rem}
 </style>
 </head>
 <body>
@@ -520,6 +580,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
     <div class="nav-item" data-panel="diet"><span class="nav-icon">🍽️</span>饮食记录</div>
     <div class="nav-item" data-panel="fitness"><span class="nav-icon">💪</span>减脂打卡</div>
     <div class="nav-item" data-panel="english"><span class="nav-icon">🔤</span>英语单词</div>
+    <div class="nav-item" data-panel="clip"><span class="nav-icon">✂️</span>切片工坊</div>
   </nav>
   <div class="sidebar-footer">
     <button onclick="exportData()">📤 导出数据</button>
@@ -743,6 +804,33 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
     </div>
     <div class="card-grid" id="word-cards" style="margin-top:8px"></div>
   </div>
+
+  <!-- 短视频切片工坊 -->
+  <div class="module-panel" id="panel-clip">
+    <div class="card">
+      <div class="card-title">✂️ 短视频切片工坊</div>
+      <div class="text-xs" style="margin-bottom:8px;color:var(--text2)">粘贴直播文字稿 → 输入筛选条件 → 自动生成完整切片物料</div>
+      <textarea class="clip-textarea" id="clip-script" placeholder="粘贴直播转写文字稿...&#10;&#10;例如：&#10;张诗婷：我觉得女生一定要清醒，不要被甜言蜜语冲昏头..."></textarea>
+      <div class="flex-row mb-md" style="margin-top:8px">
+        <input class="clip-input" id="clip-filter" placeholder="筛选关键词，如：分手、内耗、清醒、恋爱脑（可选）" style="flex:1">
+        <select id="clip-style" style="border:2px solid var(--border);border-radius:var(--radius-sm);padding:8px;font-size:0.72rem;background:#fff;color:var(--text);min-width:90px">
+          <option value="auto">自动识别</option>
+          <option value="清醒">情感清醒</option>
+          <option value="避坑">恋爱避坑</option>
+          <option value="分手">分手内耗</option>
+          <option value="现实">女性现实</option>
+        </select>
+        <button class="btn btn-pink" onclick="generateClip()" style="white-space:nowrap">🎬 生成物料</button>
+      </div>
+    </div>
+    <div id="clip-result-area"></div>
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">📂 历史切片方案 <span style="font-size:0.65rem;color:var(--text2)">（点击查看，左滑删除）</span></div>
+      <div class="scroll-list" id="clip-history" style="max-height:300px">
+        <div class="text-sm" style="text-align:center;padding:10px">暂无保存的切片方案</div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <!-- AI 小窗口 -->
@@ -773,6 +861,7 @@ const panelInfo={
   diet:{title:'🍽️ 饮食记录',desc:'记录每日饮食和营养摄入'},
   fitness:{title:'💪 减脂打卡',desc:'周一到周日健身房训练计划'},
   english:{title:'🔤 英语单词',desc:'每日四级单词打卡学习'},
+  clip:{title:'✂️ 切片工坊',desc:'直播切片物料一键生成'},
 };
 
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -807,6 +896,7 @@ function initData(){
   if(!d.wordChecked)d.wordChecked={};
   if(!d.wordDate)d.wordDate='';
   if(!d.fitnessChecked)d.fitnessChecked={};
+  if(!d.clips)d.clips=[];
   localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
 }
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
@@ -2096,6 +2186,175 @@ setTimeout(async()=>{
     }
   },2500);
 },800);
+
+// ====== 短视频切片工坊 ======
+function generateClip(){
+  const script=document.getElementById('clip-script').value.trim();
+  if(!script||script.length<30){toast('请先粘贴至少30字的直播文字稿 ✂️');return;}
+  const filter=document.getElementById('clip-filter').value.trim();
+  const style=document.getElementById('clip-style').value;
+  const area=document.getElementById('clip-result-area');
+  
+  // 解析文字稿，提取句子
+  const sentences=script.split(/[。！？\n;；，,、]+/).filter(s=>s.trim().length>5);
+  
+  // 根据筛选条件过滤相关句子
+  const styleKeywords={
+    '清醒':['清醒','现实','独立','自己','价值','事业','钱','经济','能力','成长','成熟','爱自己','别傻'],
+    '避坑':['渣男','套路','PUA','骗','坑','谎言','出轨','暧昧','前任','备胎','冷暴力','抠门'],
+    '分手':['分手','内耗','难过','痛苦','走出来','放下','失恋','哭','不值得','后悔','纠缠'],
+    '现实':['现实','婚姻','条件','彩礼','房子','工资','家庭','婆婆','孩子','年龄','外貌','身材'],
+    'auto':['清醒','现实','独立','自己','价值','渣男','套路','分手','内耗','婚姻','条件','爱自己']
+  };
+  const kw=styleKeywords[style]||styleKeywords['auto'];
+  let relevantSentences=sentences.filter(s=>{
+    const txt=s.toLowerCase();
+    if(filter){return txt.includes(filter.toLowerCase());}
+    return kw.some(k=>txt.includes(k));
+  });
+  if(relevantSentences.length===0)relevantSentences=sentences.slice(0,12);
+  if(relevantSentences.length>15)relevantSentences=relevantSentences.slice(0,15);
+  
+  // 提取金句（短而有力的句子）
+  const goldenSentences=relevantSentences.filter(s=>s.trim().length>=6&&s.trim().length<=50&&/[!！?？]$/.test(s.trim())||/[强清醒独立现实价值自己别傻渣男套路坑骗分手内耗放].*/.test(s));
+  if(goldenSentences.length<3){
+    for(const s of relevantSentences){
+      if(s.trim().length>=8&&s.trim().length<=45&&!goldenSentences.includes(s))goldenSentences.push(s);
+      if(goldenSentences.length>=5)break;
+    }
+  }
+  
+  // 生成标题
+  const titleTemplates=[
+    ['分手后','她才明白','这个道理'],
+    ['闺蜜说','恋爱脑','毁了我'],
+    ['30岁前','必须认清','的现实'],
+    ['他对我很好','但是','我还是分手了'],
+    ['女生一定要','清醒','别被甜言蜜语骗'],
+    ['谈过','3次恋爱','才懂的事'],
+    ['我妈说','这男的','不能嫁'],
+    ['分手那天','我终于','清醒了'],
+  ];
+  const tpl=titleTemplates[Math.floor(Math.random()*titleTemplates.length)];
+  const title1=`「${tpl[0]}」${tpl[1]}，${tpl[2]}`;
+  const title2=`女生必看🔥${relevantSentences[0]?relevantSentences[0].trim().substring(0,12):'情感清醒'}...看完我悟了`;
+  const title3=`如果早点听到这段话，我就不会${style==='分手'?'痛苦那么久':'恋爱脑了'}💔`;
+  
+  // 提取封面大字
+  const coverWords=goldenSentences.length>0?goldenSentences[0].trim().substring(0,10):relevantSentences[0]?relevantSentences[0].trim().substring(0,10):'女生一定要清醒';
+  
+  // 构建剪辑脚本（50-90秒结构）
+  let scriptLines=[];
+  // 0-3s 钩子
+  const hook=goldenSentences.length>0?goldenSentences[0].trim():relevantSentences[0]?relevantSentences[0].trim():'听完这段话，我瞬间清醒了';
+  scriptLines.push({ts:'0-3s',txt:`钩子：${hook}`,golden:true});
+  
+  // 3-50s 案例剖析
+  let bodyStart=3,bodyEnd=50;
+  const bodySentences=relevantSentences.slice(1,Math.min(8,relevantSentences.length));
+  const segDuration=Math.floor((bodyEnd-bodyStart)/Math.max(bodySentences.length,1));
+  let currentTs=bodyStart;
+  bodySentences.forEach((s,i)=>{
+    const endTs=Math.min(currentTs+segDuration,bodyEnd-1);
+    const isGolden=goldenSentences.includes(s);
+    scriptLines.push({ts:`${currentTs}-${endTs}s`,txt:s.trim(),golden:isGolden});
+    currentTs=endTs+1;
+  });
+  
+  // 50-85s 总结+互动引导
+  scriptLines.push({ts:'50-85s',txt:`总结：${style==='清醒'?'女生一定要清醒独立，不要把幸福寄托在别人身上':style==='避坑'?'擦亮眼睛，别被廉价的好感动，真正的爱是行动不是嘴皮子':style==='分手'?'分手不可怕，可怕的是明知道不值得还舍不得放手':'现实一点没坏处，对自己好才是终身浪漫的开始'}。评论区说说你的故事👇`,golden:false});
+  
+  // 评论区引导
+  const commentGuides=[
+    '你有没有遇到过类似的事？评论区说说👇',
+    '你觉得她说得对吗？来评论区聊聊',
+    '姐妹们，你们会怎么做？评论区见',
+    '你身边有这样的女生吗？@她来看',
+  ];
+  const commentGuide=commentGuides[Math.floor(Math.random()*commentGuides.length)];
+  
+  // 话题标签
+  const tagPool=['情感清醒','恋爱避坑','分手内耗','女性成长','女生必看','恋爱脑清醒','现实认知','人间清醒','女性独立','情感语录'];
+  const tags=tagPool.sort(()=>Math.random()-0.5).slice(0,5);
+  
+  // 构建结果HTML
+  let html='<div class="clip-result-card">';
+  html+=`<div class="clip-section"><div class="clip-label">🎬 片段时间参考</div><span style="font-size:0.7rem">建议总时长：50~85秒 | 抖音9:16竖屏 | 目标人群：20-32岁女性</span></div>`;
+  html+=`<div class="clip-section"><div class="clip-label">📌 标题备选</div>${[title1,title2,title3].map(t=>`<div class="clip-title-opt">${t}</div>`).join('')}</div>`;
+  html+=`<div class="clip-section"><div class="clip-label">🖼 封面大字</div><span style="font-size:1.1rem;font-weight:800;color:#e74c3c">${coverWords}</span></div>`;
+  html+=`<div class="clip-section"><div class="clip-label">✂️ 剪辑脚本</div>`;
+  scriptLines.forEach(l=>{
+    html+=`<div class="clip-script-line"><span class="clip-ts">${l.ts}</span><span class="clip-txt">${l.golden?`<span class="clip-golden">⭐金句：${escHtml(l.txt)}</span>`:escHtml(l.txt)}</span></div>`;
+  });
+  html+=`</div>`;
+  html+=`<div class="clip-section"><div class="clip-label">🌟 高亮金句</div>${goldenSentences.slice(0,5).map(g=>`<span class="clip-hl">${escHtml(g.trim())}</span>`).join(' &nbsp;|&nbsp; ')}</div>`;
+  html+=`<div class="clip-section"><div class="clip-label">💬 评论区引导</div><span>${commentGuide}</span></div>`;
+  html+=`<div class="clip-section"><div class="clip-label">🏷 话题标签</div>${tags.map(t=>`<span class="clip-tag">#${t}</span>`).join(' ')}</div>`;
+  html+=`<div class="clip-section" style="display:flex;gap:8px"><button class="btn btn-pink" onclick="saveClip()" style="flex:1;font-size:0.72rem">💾 保存方案</button><button class="btn btn-outline" onclick="copyClipResult()" style="flex:1;font-size:0.72rem">📋 一键复制</button></div>`;
+  html+='</div>';
+  
+  area.innerHTML=html;
+  area.scrollIntoView({behavior:'smooth'});
+  toast('✅ 切片物料已生成！');
+}
+
+function saveClip(){
+  const area=document.getElementById('clip-result-area');
+  const html=area.innerHTML;
+  if(!html){toast('请先生成切片物料');return;}
+  const d=getData();
+  const today=new Date().toLocaleDateString();
+  const now=new Date().toLocaleTimeString();
+  const script=document.getElementById('clip-script').value.trim().substring(0,80);
+  d.clips.unshift({id:Date.now(),date:today,time:now,script:script,html:html});
+  if(d.clips.length>50)d.clips=d.clips.slice(0,50);
+  saveData(d);
+  renderClipHistory();
+  toast('💾 方案已保存！');
+}
+
+function renderClipHistory(){
+  const d=getData();
+  const el=document.getElementById('clip-history');
+  if(!d.clips||d.clips.length===0){
+    el.innerHTML='<div class="text-sm" style="text-align:center;padding:10px">暂无保存的切片方案</div>';
+    return;
+  }
+  el.innerHTML=d.clips.map((c,i)=>`<div class="clip-history-item" onclick="viewClip(${c.id})" style="position:relative"><div><b>✂️ 切片方案</b> <span class="clip-h-date">${c.date} ${c.time}</span></div><div style="color:var(--text2);font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.script||'无文稿摘要')}</div><button class="del-btn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%)" onclick="event.stopPropagation();delClip(${c.id})">✕</button></div>`).join('');
+}
+
+function viewClip(id){
+  const d=getData();
+  const clip=d.clips.find(c=>c.id===id);
+  if(!clip){toast('方案不存在');return;}
+  const area=document.getElementById('clip-result-area');
+  area.innerHTML=clip.html;
+  area.scrollIntoView({behavior:'smooth'});
+  toast('📂 已加载历史方案');
+}
+
+function delClip(id){
+  if(!confirm('确定删除这个切片方案？'))return;
+  const d=getData();
+  d.clips=d.clips.filter(c=>c.id!==id);
+  saveData(d);
+  renderClipHistory();
+  toast('🗑️ 已删除');
+}
+
+function copyClipResult(){
+  const area=document.getElementById('clip-result-area');
+  const text=area.innerText||area.textContent;
+  if(!text||text.length<10){toast('没有可复制的内容');return;}
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>toast('📋 已复制到剪贴板！')).catch(()=>toast('复制失败，请手动选择'));
+  }else{
+    toast('📋 请长按选择文字手动复制');
+  }
+}
+
+// 初始化时渲染历史
+setTimeout(()=>{renderClipHistory();},1200);
 
 // === PWA Service Worker ===
 if('serviceWorker' in navigator){
