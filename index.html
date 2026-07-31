@@ -269,17 +269,34 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .book-item .pct{color:var(--accent);font-weight:600}
 /* 金融 */
 .finance-item{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 0;border-bottom:1px solid #fdf0f3;font-size:0.76rem;
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;
+  padding:8px 0;border-bottom:1px solid #fdf0f3;font-size:0.76rem;
 }
 .finance-item .symbol{font-weight:700;min-width:55px}
-.finance-item .price{font-weight:600;min-width:55px;text-align:right}
+.finance-item .price{font-weight:600;min-width:50px;text-align:right}
 .finance-item .change{
-  min-width:50px;text-align:right;font-size:0.7rem;font-weight:600;
-  padding:1px 5px;border-radius:4px;
+  min-width:45px;text-align:right;font-size:0.68rem;font-weight:600;
+  padding:1px 4px;border-radius:4px;
 }
 .finance-item .change.up{color:#c0392b;background:#fff0f0}
 .finance-item .change.down{color:#27ae60;background:#eafaf1}
+.finance-item .advice{
+  width:100%;font-size:0.65rem;padding:3px 6px;margin-top:2px;
+  border-radius:4px;line-height:1.3;
+}
+.finance-item .advice.buy{background:#ffeaea;color:#c0392b}
+.finance-item .advice.hold{background:#fff8e1;color:#b8860b}
+.finance-item .advice.sell{background:#eafaf1;color:#27ae60}
+.finance-item .advice.wait{background:#f0f0f0;color:#888}
+.finance-review{
+  background:linear-gradient(135deg,#fff5f7,#ffeef3);
+  border-radius:var(--radius-sm);padding:10px 12px;
+  margin-top:10px;font-size:0.72rem;line-height:1.5;
+  border:1px solid var(--border);
+}
+.finance-review .fr-title{font-weight:700;color:var(--accent);margin-bottom:6px}
+.finance-review .fr-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dotted #fde8ef}
+.finance-review .fr-row:last-child{border-bottom:none}
 /* 复盘 */
 .idx-row{
   display:flex;align-items:center;gap:8px;
@@ -683,17 +700,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
       <button class="btn btn-outline" style="width:100%;margin-top:6px;font-size:0.72rem" onclick="refreshStockPicks()">🔄 刷新推荐+实时价格</button>
     </div>
     <div class="card" style="margin-top:10px">
-      <div class="card-title">📈 自选股关注</div>
+      <div class="card-title">📈 自选股关注 <span style="font-size:0.6rem;color:var(--text2)">含买卖建议</span></div>
       <div class="flex-row mb-md">
-        <input id="finance-symbol" placeholder="输入代码，如 000001、AAPL" style="flex:1" onkeydown="if(event.key==='Enter')addFinanceSymbol()">
+        <input id="finance-symbol" placeholder="输入代码，如 000001" style="flex:1" onkeydown="if(event.key==='Enter')addFinanceSymbol()">
         <button class="btn btn-pink" onclick="addFinanceSymbol()">+</button>
       </div>
       <div class="flex-between mb-sm">
-        <span class="text-xs">💡 支持A股/港股/美股</span>
-        <button class="btn btn-outline" style="font-size:0.7rem;padding:4px 8px" onclick="refreshFinance()">🔄 刷新</button>
+        <span class="text-xs">💡 支持A股，自动生成买卖建议</span>
+        <button class="btn btn-outline" style="font-size:0.7rem;padding:4px 8px" onclick="refreshFinance()">🔄 刷新全部</button>
       </div>
-      <div class="scroll-list" id="finance-list"></div>
-      <div id="finance-note" class="text-sm" style="text-align:center;padding:12px">输入代码添加关注，点击刷新获取实时价格</div>
+      <div class="scroll-list" id="finance-list" style="max-height:400px"></div>
+      <div id="finance-note" class="text-sm" style="text-align:center;padding:12px">输入代码添加关注，自动分析买卖时机</div>
+      <div id="finance-auto-review"></div>
     </div>
   </div>
 
@@ -878,7 +896,7 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     // 切换到复盘时刷新数据
     if(panel==='review')refreshReview();
     // 切换到金融财经时加载新闻和推荐
-    if(panel==='finance'){refreshFinanceNews();renderStockPicks();}
+    if(panel==='finance'){refreshFinanceNews();renderStockPicks();renderFinanceReview();}
   });
 });
 
@@ -1001,18 +1019,150 @@ function addFinanceSymbol(){
   if(d.finance.length>30)d.finance=d.finance.slice(0,30);saveData(d);
   input.value='';renderFinance();refreshSingle(code);
 }
-function delFinance(id){const d=getData();d.finance=d.finance.filter(x=>x.id!==id);saveData(d);renderFinance();}
+function delFinance(id){const d=getData();d.finance=d.finance.filter(x=>x.id!==id);saveData(d);renderFinance();renderFinanceReview();}
+
+// 买入卖出建议引擎
+function getTradeAdvice(price,changePct,open,high,low){
+  const pct=parseFloat(changePct);
+  const p=parseFloat(price),o=parseFloat(open),h=parseFloat(high),l=parseFloat(low);
+  // 日内波动率
+  const dayRange=h&&l?((h-l)/l*100).toFixed(1):'--';
+  // 判断趋势
+  let advice='',cls='';
+  if(pct>5){
+    advice=`🚀 今日大涨${pct}%，已进入超买区。建议：短线可分批止盈，不宜追高。日内振幅${dayRange}%`;
+    cls='sell';
+  }else if(pct>2&&p>o){
+    advice=`📈 强势上涨${pct}%，量价配合良好。建议：持有待涨，回调至均线可加仓。日内振幅${dayRange}%`;
+    cls='buy';
+  }else if(pct>0&&pct<=2){
+    advice=`✅ 小幅收红${pct}%，趋势向好。建议：可小仓试探建仓，止损设-3%。日内振幅${dayRange}%`;
+    cls='buy';
+  }else if(pct<-5){
+    advice=`🔻 大跌${pct}%，恐慌盘涌出。建议：观望等待企稳，不抄底。日内振幅${dayRange}%`;
+    cls='wait';
+  }else if(pct<-2){
+    advice=`📉 下跌${pct}%，短期弱势。建议：持有者关注支撑位，跌破需止损。日内振幅${dayRange}%`;
+    cls='sell';
+  }else if(pct<0&&pct>=-2){
+    advice=`⏸ 微跌${pct}%，窄幅整理。建议：观望为主，等待方向选择。日内振幅${dayRange}%`;
+    cls='hold';
+  }else{
+    advice=`➡️ 平盘整理，方向不明。建议：观望，等放量突破再介入。`;
+    cls='hold';
+  }
+  return {advice,cls};
+}
+
 function renderFinance(){
   const d=getData();const ul=document.getElementById('finance-list');
   const note=document.getElementById('finance-note');
-  if(!d.finance||d.finance.length===0){ul.innerHTML='';note.style.display='block';return;}
+  if(!d.finance||d.finance.length===0){ul.innerHTML='';note.style.display='block';renderFinanceReview();return;}
   note.style.display='none';
-  ul.innerHTML=d.finance.map(f=>{const isUp=String(f.changePct).startsWith('+'),isDown=String(f.changePct).startsWith('-'),cls=isUp?'up':(isDown?'down':'');return `<div class="finance-item"><span class="symbol">${escHtml(f.code)}</span><span style="flex:1;font-size:0.72rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span><span class="price">¥${f.price}</span><span class="change ${cls}">${f.changePct}%</span><button class="del-btn" onclick="delFinance(${f.id})">✕</button></div>`}).join('');
+  ul.innerHTML=d.finance.map(f=>{
+    const isUp=String(f.changePct).startsWith('+'),isDown=String(f.changePct).startsWith('-');
+    const cls=isUp?'up':(isDown?'down':'');
+    const advice=f._advice||'';
+    const adviceCls=f._adviceCls||'';
+    return `<div class="finance-item">
+      <span class="symbol">${escHtml(f.code)}</span>
+      <span style="flex:1;font-size:0.7rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</span>
+      <span class="price">¥${f.price}</span>
+      <span class="change ${cls}">${f.changePct}%</span>
+      <button class="del-btn" onclick="delFinance(${f.id})">✕</button>
+      ${advice?`<div class="advice ${adviceCls}">${advice}</div>`:''}
+    </div>`;
+  }).join('');
 }
+
 async function refreshSingle(code){
-  try{let mkt=0;if(/^\d{5}$/.test(code)||code.startsWith('HK'))mkt=116;else if(/^[A-Z]+$/.test(code)&&!/^\d+$/.test(code))mkt=105;let secid='';if(mkt===116)secid=`116.${code.replace('HK','')}`;else if(mkt===105)secid=`105.${code}`;else secid=`1.${code}`;const resp=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f44,f45,f58,f57,f170,f169`);const json=await resp.json();const d=json.data;if(!d||!d.f43)return;const price=(d.f43/100).toFixed(2),changePct=(d.f170/100).toFixed(2),name=d.f58||code;const data=getData();const item=data.finance.find(x=>x.code===code);if(item){item.name=name;item.price=price;item.changePct=(d.f170/100>=0?'+':'')+changePct;item.updated=Date.now();saveData(data);renderFinance();}}catch(e){}
+  try{
+    let secid='';
+    if(code.startsWith('6'))secid=`1.${code}`;
+    else if(code.startsWith('0')||code.startsWith('3'))secid=`0.${code}`;
+    else secid=`1.${code}`;
+    const resp=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f44,f45,f46,f47,f58,f57,f170,f169,f60`);
+    const json=await resp.json();
+    const d=json.data;if(!d||!d.f43)return;
+    const price=(d.f43/100).toFixed(2);
+    const changePct=(d.f170/100).toFixed(2);
+    const name=d.f58||code;
+    const open=(d.f46/100).toFixed(2);
+    const high=(d.f44/100).toFixed(2);
+    const low=(d.f45/100).toFixed(2);
+    const data=getData();
+    const item=data.finance.find(x=>x.code===code);
+    if(item){
+      item.name=name;item.price=price;
+      item.changePct=(d.f170/100>=0?'+':'')+changePct;
+      item.updated=Date.now();
+      // 生成买卖建议
+      const ad=getTradeAdvice(price,changePct,open,high,low);
+      item._advice=ad.advice;item._adviceCls=ad.cls;
+      // 存储额外数据供复盘用
+      item._open=open;item._high=high;item._low=low;
+      saveData(data);
+      renderFinance();
+    }
+  }catch(e){}
 }
-async function refreshFinance(){const d=getData();if(!d.finance||d.finance.length===0){toast('请先添加代码');return;}toast('刷新中...');await Promise.allSettled(d.finance.map(f=>refreshSingle(f.code)));renderFinance();toast('已刷新！');}
+async function refreshFinance(){
+  const d=getData();
+  if(!d.finance||d.finance.length===0){toast('请先添加代码');return;}
+  toast('刷新中...');
+  await Promise.allSettled(d.finance.map(f=>refreshSingle(f.code)));
+  renderFinance();
+  renderFinanceReview();
+  toast('✅ 已刷新！');
+}
+
+// ====== 自选股每日自动复盘 ======
+function renderFinanceReview(){
+  const d=getData();
+  const el=document.getElementById('finance-auto-review');
+  if(!d.finance||d.finance.length===0){el.innerHTML='';return;}
+  const today=new Date().toLocaleDateString();
+  let upCount=0,downCount=0,flatCount=0;
+  let buyCount=0,sellCount=0,holdCount=0;
+  d.finance.forEach(f=>{
+    const pct=parseFloat(f.changePct);
+    if(pct>0)upCount++;else if(pct<0)downCount++;else flatCount++;
+    const cls=f._adviceCls||'';
+    if(cls==='buy')buyCount++;
+    else if(cls==='sell')sellCount++;
+    else holdCount++;
+  });
+  const total=d.finance.length;
+  const winRate=total>0?Math.round(upCount/total*100):0;
+  let summary='';
+  if(winRate>=80)summary='🎉 今日表现优秀！多数自选股走强，持仓收益可观。';
+  else if(winRate>=50)summary='👍 今日表现尚可，涨跌各半，注意调仓。';
+  else if(winRate>=30)summary='📉 今日偏弱，多数自选股回调，控制仓位。';
+  else summary='⚠️ 今日全线走弱，建议减仓观望，等待企稳信号。';
+
+  let html=`<div class="finance-review">
+    <div class="fr-title">📊 自选股每日复盘 · ${today}</div>
+    <div class="fr-row"><span>📈 上涨</span><span style="color:#c0392b;font-weight:700">${upCount}只</span></div>
+    <div class="fr-row"><span>📉 下跌</span><span style="color:#27ae60;font-weight:700">${downCount}只</span></div>
+    <div class="fr-row"><span>➡️ 平盘</span><span style="color:#888;font-weight:700">${flatCount}只</span></div>
+    <div class="fr-row"><span>🎯 胜率</span><span style="color:var(--accent);font-weight:700">${winRate}%</span></div>
+    <div class="fr-row"><span>🟢 建议买入</span><span style="color:#c0392b;font-weight:700">${buyCount}只</span></div>
+    <div class="fr-row"><span>🔴 建议卖出</span><span style="color:#27ae60;font-weight:700">${sellCount}只</span></div>
+    <div class="fr-row"><span>⏸ 观望持有</span><span style="color:#b8860b;font-weight:700">${holdCount}只</span></div>
+    <div style="margin-top:8px;padding:8px;background:#fff;border-radius:6px;font-size:0.7rem;line-height:1.5">${summary}</div>`;
+
+  // 列出具体买卖建议
+  const buyList=d.finance.filter(f=>f._adviceCls==='buy');
+  const sellList=d.finance.filter(f=>f._adviceCls==='sell');
+  if(buyList.length>0){
+    html+=`<div style="margin-top:6px;font-size:0.68rem;color:#c0392b">🟢 可关注：${buyList.map(f=>escHtml(f.name||f.code)+'('+f.changePct+'%)').join('、')}</div>`;
+  }
+  if(sellList.length>0){
+    html+=`<div style="margin-top:4px;font-size:0.68rem;color:#27ae60">🔴 需谨慎：${sellList.map(f=>escHtml(f.name||f.code)+'('+f.changePct+'%)').join('、')}</div>`;
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
 
 // ====== 股市复盘（全面分析+新闻翻译） ======
 let _marketData={};
@@ -2198,7 +2348,7 @@ function clearAll(){if(confirm('确定清空所有数据？不可恢复！')){lo
 function renderAll(){renderTodos();renderBills();renderCheckins();renderDiaries();renderBooks();renderFinance();renderReview();renderDiet();renderFitness();renderWords();}
 
 initData();renderAll();
-setTimeout(()=>{const d=getData();if(d.finance&&d.finance.length>0)refreshFinance();},1500);
+setTimeout(()=>{const d=getData();if(d.finance&&d.finance.length>0){refreshFinance().then(()=>renderFinanceReview());}else{renderFinanceReview();}},1500);
 // 预加载金融新闻和短线推荐
 setTimeout(async()=>{
   refreshFinanceNews();
