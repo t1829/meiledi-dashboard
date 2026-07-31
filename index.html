@@ -2317,7 +2317,7 @@ function sendAI(){
     }else{
       // 自动生成切片物料
       const result=generateClipFromText(clipText,'auto');
-      // 渲染结果到切片工坊面板
+      // 渲染到切片工坊面板
       const area=document.getElementById('clip-result-area');
       if(area){area.innerHTML=result.html;area.scrollIntoView({behavior:'smooth'});}
       // 自动保存到历史
@@ -2327,8 +2327,16 @@ function sendAI(){
       d.clips.unshift({id:Date.now(),date:today,time:now,script:clipText.substring(0,80),html:result.html});
       if(d.clips.length>50)d.clips=d.clips.slice(0,50);
       saveData(d);renderClipHistory();
-      // 构建回复
-      reply=`✂️ 切片物料已自动生成！\n\n📌 标题：${result.titles[0]}\n🖼 封面：${result.cover}\n⏱ 时长：50~85秒\n🏷 标签：${result.tags.slice(0,3).map(t=>'#'+t).join(' ')}\n\n💡 已自动保存到【切片工坊】面板，可查看完整脚本和复制。`;
+      // 自动切换到切片工坊面板
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+      document.querySelector('.nav-item[data-panel="clip"]').classList.add('active');
+      document.querySelectorAll('.module-panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('panel-clip').classList.add('active');
+      document.getElementById('panel-header-title').textContent=panelInfo.clip.title;
+      document.getElementById('panel-header-desc').textContent=panelInfo.clip.desc;
+      document.querySelector('.sidebar').classList.remove('open');
+      // AI回复完整物料文本
+      reply=result.text+'\n\n💡 已自动保存到【切片工坊】历史记录。';
     }
     matched=true;
   }
@@ -2449,7 +2457,19 @@ function generateClipFromText(script,style,filter){
   html+=`<div class="clip-section" style="display:flex;gap:8px"><button class="btn btn-pink" onclick="saveClip()" style="flex:1;font-size:0.72rem">💾 保存方案</button><button class="btn btn-outline" onclick="copyClipResult()" style="flex:1;font-size:0.72rem">📋 一键复制</button></div>`;
   html+='</div>';
 
-  return {html,titles,cover:coverWords,tags,goldenSentences,scriptLines};
+  // 构建纯文本版（供AI对话输出）
+  let text='';
+  text+=`【参考片段时间】建议总时长：50~85秒 | 抖音9:16竖屏 | 目标人群：20-32岁女性\n\n`;
+  text+=`【标题备选】\n① ${titles[0]}\n② ${titles[1]}\n③ ${titles[2]}\n\n`;
+  text+=`【封面大字】${coverWords}\n\n`;
+  text+=`【剪辑脚本】\n`;
+  scriptLines.forEach(l=>{text+=`${l.ts}：${l.txt}\n`;});
+  text+=`\n【剪辑高亮金句】适合剪映黄色大字幕\n`;
+  goldenSentences.slice(0,5).forEach((g,i)=>{text+=`${i+1}. ${g.trim()}\n`;});
+  text+=`\n【评论区引导文案】${commentGuide}\n\n`;
+  text+=`【话题标签】${tags.map(t=>'#'+t).join(' ')}`;
+
+  return {html,text,titles,cover:coverWords,tags,goldenSentences,scriptLines};
 }
 
 // 面板版 generateClip（从输入框读取）
