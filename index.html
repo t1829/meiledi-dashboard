@@ -2151,6 +2151,30 @@ const aiKeywords={spend:/[花消支出]了?\s*(\d+)/,earn:/[赚收入]了?\s*(\d
 function sendAI(){
   const input=document.getElementById('ai-input');const text=input.value.trim();if(!text)return;
   appendAIMsg('user',text);input.value='';let reply='',matched=false;
+  
+  // ====== 切片指令识别 ======
+  if(text.startsWith('切片')){
+    const clipText=text.replace(/^切片/, '').trim();
+    if(!clipText||clipText.length<30){
+      reply='✂️ 切片格式：切片+粘贴直播文字稿（至少30字）\n\n示例：\n切片张诗婷：我觉得女生一定要清醒，不要被甜言蜜语冲昏头。他嘴上说爱你，行动上什么都不做，这就是在消耗你...';
+    }else{
+      // 自动生成切片物料
+      const result=generateClipFromText(clipText,'auto');
+      // 渲染结果到切片工坊面板
+      const area=document.getElementById('clip-result-area');
+      if(area){area.innerHTML=result.html;area.scrollIntoView({behavior:'smooth'});}
+      // 自动保存到历史
+      const d=getData();
+      const today=new Date().toLocaleDateString();
+      const now=new Date().toLocaleTimeString();
+      d.clips.unshift({id:Date.now(),date:today,time:now,script:clipText.substring(0,80),html:result.html});
+      if(d.clips.length>50)d.clips=d.clips.slice(0,50);
+      saveData(d);renderClipHistory();
+      // 构建回复
+      reply=`✂️ 切片物料已自动生成！\n\n📌 标题：${result.titles[0]}\n🖼 封面：${result.cover}\n⏱ 时长：50~85秒\n🏷 标签：${result.tags.slice(0,3).map(t=>'#'+t).join(' ')}\n\n💡 已自动保存到【切片工坊】面板，可查看完整脚本和复制。`;
+    }
+    matched=true;
+  }
   const spendMatch=text.match(aiKeywords.spend);
   if(spendMatch){const d=getData();d.bills.unshift({id:Date.now(),amount:parseFloat(spendMatch[1]),type:'expense',desc:text,date:new Date().toLocaleDateString()});if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);renderBills();reply=`✅ 已记录支出 ¥${spendMatch[1]}`;matched=true;}
   if(!matched){const m=text.match(aiKeywords.earn);if(m){const d=getData();d.bills.unshift({id:Date.now(),amount:parseFloat(m[1]),type:'income',desc:text,date:new Date().toLocaleDateString()});if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);renderBills();reply=`✅ 已记录收入 ¥${m[1]}`;matched=true;}}
@@ -2161,7 +2185,7 @@ function sendAI(){
   if(!matched){const m=text.match(aiKeywords.review);if(m){const d=getData();const today=new Date().toLocaleDateString();const existing=d.reviews.findIndex(x=>x.date===today);const entry={id:Date.now(),date:today,text:m[1],indices:document.getElementById('review-indices').innerHTML,hotSectors:document.getElementById('hot-tags').innerHTML,news:window._cachedNews||'',upCount:document.getElementById('rv-up').textContent,downCount:document.getElementById('rv-down').textContent,volume:document.getElementById('rv-volume').textContent};if(existing>-1)d.reviews[existing]=entry;else d.reviews.unshift(entry);if(d.reviews.length>60)d.reviews=d.reviews.slice(0,60);saveData(d);renderReview();reply=`📊 复盘已保存！`;matched=true;}}
   if(!matched){const m=text.match(aiKeywords.meal);if(m){const d=getData();const today=getToday();d.meals.unshift({id:Date.now(),date:today,type:'snack',food:m[1].trim(),cal:parseInt(m[2])||0});if(d.meals.length>200)d.meals=d.meals.slice(0,200);saveData(d);renderHealth();reply=`🍽️ 已记录饮食：「${m[1].trim()}」${m[2]}kcal`;matched=true;}}
   if(!matched){const m=text.match(aiKeywords.sport);if(m){const d=getData();const today=getToday();const calPerMin=SPORT_CAL_PER_MIN[m[1]]||5;d.sports.unshift({id:Date.now(),date:today,type:m[1],min:parseInt(m[2]),cal:Math.round(parseInt(m[2])*calPerMin)});if(d.sports.length>200)d.sports=d.sports.slice(0,200);saveData(d);renderHealth();reply=`🏃 ${m[1]} ${m[2]}分钟，消耗约${Math.round(parseInt(m[2])*calPerMin)}kcal！`;matched=true;}}
-  if(!matched)reply='收到～你可以说：\n• "花了35买咖啡" → 记账\n• "待办：去超市" → 待办\n• "心情：很开心" → 日记\n• "股票：000001" → 自选\n• "吃了：苹果 95kcal" → 饮食\n• "跑步 30分" → 运动';
+  if(!matched)reply='收到～你可以说：\n• "花了35买咖啡" → 记账\n• "待办：去超市" → 待办\n• "心情：很开心" → 日记\n• "股票：000001" → 自选\n• "吃了：苹果 95kcal" → 饮食\n• "跑步 30分" → 运动\n• "切片+直播文稿" → 切片物料';
   setTimeout(()=>appendAIMsg('bot',reply),400);
 }
 function appendAIMsg(type,text){const el=document.getElementById('ai-messages');el.innerHTML+=`<div class="ai-msg ${type}">${escHtml(text).replace(/\n/g,'<br>')}</div>`;el.scrollTop=el.scrollHeight;}
@@ -2187,35 +2211,41 @@ setTimeout(async()=>{
   },2500);
 },800);
 
-// ====== 短视频切片工坊 ======
-function generateClip(){
-  const script=document.getElementById('clip-script').value.trim();
-  if(!script||script.length<30){toast('请先粘贴至少30字的直播文字稿 ✂️');return;}
-  const filter=document.getElementById('clip-filter').value.trim();
-  const style=document.getElementById('clip-style').value;
-  const area=document.getElementById('clip-result-area');
-  
-  // 解析文字稿，提取句子
+// ====== 短视频切片工坊：核心引擎 ======
+const STYLE_KEYWORDS={
+  '清醒':['清醒','现实','独立','自己','价值','事业','钱','经济','能力','成长','成熟','爱自己','别傻'],
+  '避坑':['渣男','套路','PUA','骗','坑','谎言','出轨','暧昧','前任','备胎','冷暴力','抠门'],
+  '分手':['分手','内耗','难过','痛苦','走出来','放下','失恋','哭','不值得','后悔','纠缠'],
+  '现实':['现实','婚姻','条件','彩礼','房子','工资','家庭','婆婆','孩子','年龄','外貌','身材'],
+  'auto':['清醒','现实','独立','自己','价值','渣男','套路','分手','内耗','婚姻','条件','爱自己']
+};
+const TITLE_TEMPLATES=[
+  ['分手后','她才明白','这个道理'],['闺蜜说','恋爱脑','毁了我'],
+  ['30岁前','必须认清','的现实'],['他对我很好','但是','我还是分手了'],
+  ['女生一定要','清醒','别被甜言蜜语骗'],['谈过','3次恋爱','才懂的事'],
+  ['我妈说','这男的','不能嫁'],['分手那天','我终于','清醒了'],
+];
+const COMMENT_GUIDES=[
+  '你有没有遇到过类似的事？评论区说说👇',
+  '你觉得她说得对吗？来评论区聊聊',
+  '姐妹们，你们会怎么做？评论区见',
+  '你身边有这样的女生吗？@她来看',
+];
+const TAG_POOL=['情感清醒','恋爱避坑','分手内耗','女性成长','女生必看','恋爱脑清醒','现实认知','人间清醒','女性独立','情感语录'];
+
+function generateClipFromText(script,style,filter){
+  filter=filter||'';
+  style=style||'auto';
   const sentences=script.split(/[。！？\n;；，,、]+/).filter(s=>s.trim().length>5);
-  
-  // 根据筛选条件过滤相关句子
-  const styleKeywords={
-    '清醒':['清醒','现实','独立','自己','价值','事业','钱','经济','能力','成长','成熟','爱自己','别傻'],
-    '避坑':['渣男','套路','PUA','骗','坑','谎言','出轨','暧昧','前任','备胎','冷暴力','抠门'],
-    '分手':['分手','内耗','难过','痛苦','走出来','放下','失恋','哭','不值得','后悔','纠缠'],
-    '现实':['现实','婚姻','条件','彩礼','房子','工资','家庭','婆婆','孩子','年龄','外貌','身材'],
-    'auto':['清醒','现实','独立','自己','价值','渣男','套路','分手','内耗','婚姻','条件','爱自己']
-  };
-  const kw=styleKeywords[style]||styleKeywords['auto'];
+  const kw=STYLE_KEYWORDS[style]||STYLE_KEYWORDS['auto'];
   let relevantSentences=sentences.filter(s=>{
     const txt=s.toLowerCase();
-    if(filter){return txt.includes(filter.toLowerCase());}
+    if(filter)return txt.includes(filter.toLowerCase());
     return kw.some(k=>txt.includes(k));
   });
   if(relevantSentences.length===0)relevantSentences=sentences.slice(0,12);
   if(relevantSentences.length>15)relevantSentences=relevantSentences.slice(0,15);
-  
-  // 提取金句（短而有力的句子）
+
   const goldenSentences=relevantSentences.filter(s=>s.trim().length>=6&&s.trim().length<=50&&/[!！?？]$/.test(s.trim())||/[强清醒独立现实价值自己别傻渣男套路坑骗分手内耗放].*/.test(s));
   if(goldenSentences.length<3){
     for(const s of relevantSentences){
@@ -2223,77 +2253,57 @@ function generateClip(){
       if(goldenSentences.length>=5)break;
     }
   }
-  
-  // 生成标题
-  const titleTemplates=[
-    ['分手后','她才明白','这个道理'],
-    ['闺蜜说','恋爱脑','毁了我'],
-    ['30岁前','必须认清','的现实'],
-    ['他对我很好','但是','我还是分手了'],
-    ['女生一定要','清醒','别被甜言蜜语骗'],
-    ['谈过','3次恋爱','才懂的事'],
-    ['我妈说','这男的','不能嫁'],
-    ['分手那天','我终于','清醒了'],
-  ];
-  const tpl=titleTemplates[Math.floor(Math.random()*titleTemplates.length)];
+
+  const tpl=TITLE_TEMPLATES[Math.floor(Math.random()*TITLE_TEMPLATES.length)];
   const title1=`「${tpl[0]}」${tpl[1]}，${tpl[2]}`;
   const title2=`女生必看🔥${relevantSentences[0]?relevantSentences[0].trim().substring(0,12):'情感清醒'}...看完我悟了`;
   const title3=`如果早点听到这段话，我就不会${style==='分手'?'痛苦那么久':'恋爱脑了'}💔`;
-  
-  // 提取封面大字
+  const titles=[title1,title2,title3];
+
   const coverWords=goldenSentences.length>0?goldenSentences[0].trim().substring(0,10):relevantSentences[0]?relevantSentences[0].trim().substring(0,10):'女生一定要清醒';
-  
-  // 构建剪辑脚本（50-90秒结构）
+
   let scriptLines=[];
-  // 0-3s 钩子
   const hook=goldenSentences.length>0?goldenSentences[0].trim():relevantSentences[0]?relevantSentences[0].trim():'听完这段话，我瞬间清醒了';
   scriptLines.push({ts:'0-3s',txt:`钩子：${hook}`,golden:true});
-  
-  // 3-50s 案例剖析
   let bodyStart=3,bodyEnd=50;
   const bodySentences=relevantSentences.slice(1,Math.min(8,relevantSentences.length));
   const segDuration=Math.floor((bodyEnd-bodyStart)/Math.max(bodySentences.length,1));
   let currentTs=bodyStart;
-  bodySentences.forEach((s,i)=>{
+  bodySentences.forEach(s=>{
     const endTs=Math.min(currentTs+segDuration,bodyEnd-1);
-    const isGolden=goldenSentences.includes(s);
-    scriptLines.push({ts:`${currentTs}-${endTs}s`,txt:s.trim(),golden:isGolden});
+    scriptLines.push({ts:`${currentTs}-${endTs}s`,txt:s.trim(),golden:goldenSentences.includes(s)});
     currentTs=endTs+1;
   });
-  
-  // 50-85s 总结+互动引导
   scriptLines.push({ts:'50-85s',txt:`总结：${style==='清醒'?'女生一定要清醒独立，不要把幸福寄托在别人身上':style==='避坑'?'擦亮眼睛，别被廉价的好感动，真正的爱是行动不是嘴皮子':style==='分手'?'分手不可怕，可怕的是明知道不值得还舍不得放手':'现实一点没坏处，对自己好才是终身浪漫的开始'}。评论区说说你的故事👇`,golden:false});
-  
-  // 评论区引导
-  const commentGuides=[
-    '你有没有遇到过类似的事？评论区说说👇',
-    '你觉得她说得对吗？来评论区聊聊',
-    '姐妹们，你们会怎么做？评论区见',
-    '你身边有这样的女生吗？@她来看',
-  ];
-  const commentGuide=commentGuides[Math.floor(Math.random()*commentGuides.length)];
-  
-  // 话题标签
-  const tagPool=['情感清醒','恋爱避坑','分手内耗','女性成长','女生必看','恋爱脑清醒','现实认知','人间清醒','女性独立','情感语录'];
-  const tags=tagPool.sort(()=>Math.random()-0.5).slice(0,5);
-  
-  // 构建结果HTML
+
+  const commentGuide=COMMENT_GUIDES[Math.floor(Math.random()*COMMENT_GUIDES.length)];
+  const tags=TAG_POOL.sort(()=>Math.random()-0.5).slice(0,5);
+
   let html='<div class="clip-result-card">';
   html+=`<div class="clip-section"><div class="clip-label">🎬 片段时间参考</div><span style="font-size:0.7rem">建议总时长：50~85秒 | 抖音9:16竖屏 | 目标人群：20-32岁女性</span></div>`;
-  html+=`<div class="clip-section"><div class="clip-label">📌 标题备选</div>${[title1,title2,title3].map(t=>`<div class="clip-title-opt">${t}</div>`).join('')}</div>`;
+  html+=`<div class="clip-section"><div class="clip-label">📌 标题备选</div>${titles.map(t=>`<div class="clip-title-opt">${t}</div>`).join('')}</div>`;
   html+=`<div class="clip-section"><div class="clip-label">🖼 封面大字</div><span style="font-size:1.1rem;font-weight:800;color:#e74c3c">${coverWords}</span></div>`;
   html+=`<div class="clip-section"><div class="clip-label">✂️ 剪辑脚本</div>`;
-  scriptLines.forEach(l=>{
-    html+=`<div class="clip-script-line"><span class="clip-ts">${l.ts}</span><span class="clip-txt">${l.golden?`<span class="clip-golden">⭐金句：${escHtml(l.txt)}</span>`:escHtml(l.txt)}</span></div>`;
-  });
+  scriptLines.forEach(l=>{html+=`<div class="clip-script-line"><span class="clip-ts">${l.ts}</span><span class="clip-txt">${l.golden?`<span class="clip-golden">⭐金句：${escHtml(l.txt)}</span>`:escHtml(l.txt)}</span></div>`;});
   html+=`</div>`;
   html+=`<div class="clip-section"><div class="clip-label">🌟 高亮金句</div>${goldenSentences.slice(0,5).map(g=>`<span class="clip-hl">${escHtml(g.trim())}</span>`).join(' &nbsp;|&nbsp; ')}</div>`;
   html+=`<div class="clip-section"><div class="clip-label">💬 评论区引导</div><span>${commentGuide}</span></div>`;
   html+=`<div class="clip-section"><div class="clip-label">🏷 话题标签</div>${tags.map(t=>`<span class="clip-tag">#${t}</span>`).join(' ')}</div>`;
   html+=`<div class="clip-section" style="display:flex;gap:8px"><button class="btn btn-pink" onclick="saveClip()" style="flex:1;font-size:0.72rem">💾 保存方案</button><button class="btn btn-outline" onclick="copyClipResult()" style="flex:1;font-size:0.72rem">📋 一键复制</button></div>`;
   html+='</div>';
-  
-  area.innerHTML=html;
+
+  return {html,titles,cover:coverWords,tags,goldenSentences,scriptLines};
+}
+
+// 面板版 generateClip（从输入框读取）
+function generateClip(){
+  const script=document.getElementById('clip-script').value.trim();
+  if(!script||script.length<30){toast('请先粘贴至少30字的直播文字稿 ✂️');return;}
+  const filter=document.getElementById('clip-filter').value.trim();
+  const style=document.getElementById('clip-style').value;
+  const area=document.getElementById('clip-result-area');
+  const result=generateClipFromText(script,style,filter);
+  area.innerHTML=result.html;
   area.scrollIntoView({behavior:'smooth'});
   toast('✅ 切片物料已生成！');
 }
