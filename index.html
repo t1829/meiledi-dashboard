@@ -2308,31 +2308,6 @@ const aiKeywords={spend:/[花消支出]了?\s*(\d+)/,earn:/[赚收入]了?\s*(\d
 function sendAI(){
   const input=document.getElementById('ai-input');const text=input.value.trim();if(!text)return;
   appendAIMsg('user',text);input.value='';let reply='',matched=false;
-  
-  // ====== 智能识别：长文本自动触发切片生成 ======
-  // 检测条件：文本超过50字 且 包含情感/直播类关键词
-  const clipKeywords=['女生','男人','恋爱','分手','结婚','感情','渣男','清醒','独立','自己','现实','婚姻','内耗','不值得','前任','出轨','暧昧','老公','男朋友','彩礼','家庭','婆婆','孩子','年龄','外貌','身材','事业','钱','经济','能力','成长','成熟','爱自己','套路','谎言','哭','后悔','纠缠','放下','走出来','失恋','难过','痛苦','别傻','闺蜜'];
-  const isClipText=text.length>50 && clipKeywords.some(k=>text.includes(k));
-  if(isClipText){
-    const result=generateClipFromText(text,'auto');
-    const area=document.getElementById('clip-result-area');
-    if(area){area.innerHTML=result.html;area.scrollIntoView({behavior:'smooth'});}
-    const d=getData();
-    const today=new Date().toLocaleDateString();
-    const now=new Date().toLocaleTimeString();
-    d.clips.unshift({id:Date.now(),date:today,time:now,script:text.substring(0,80),html:result.html});
-    if(d.clips.length>50)d.clips=d.clips.slice(0,50);
-    saveData(d);renderClipHistory();
-    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-    document.querySelector('.nav-item[data-panel="clip"]').classList.add('active');
-    document.querySelectorAll('.module-panel').forEach(p=>p.classList.remove('active'));
-    document.getElementById('panel-clip').classList.add('active');
-    document.getElementById('panel-header-title').textContent=panelInfo.clip.title;
-    document.getElementById('panel-header-desc').textContent=panelInfo.clip.desc;
-    document.querySelector('.sidebar').classList.remove('open');
-    reply=result.text+'\n\n💡 已自动保存到【切片工坊】历史记录。';
-    matched=true;
-  }
   const spendMatch=text.match(aiKeywords.spend);
   if(spendMatch){const d=getData();d.bills.unshift({id:Date.now(),amount:parseFloat(spendMatch[1]),type:'expense',desc:text,date:new Date().toLocaleDateString()});if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);renderBills();reply=`✅ 已记录支出 ¥${spendMatch[1]}`;matched=true;}
   if(!matched){const m=text.match(aiKeywords.earn);if(m){const d=getData();d.bills.unshift({id:Date.now(),amount:parseFloat(m[1]),type:'income',desc:text,date:new Date().toLocaleDateString()});if(d.bills.length>100)d.bills=d.bills.slice(0,100);saveData(d);renderBills();reply=`✅ 已记录收入 ¥${m[1]}`;matched=true;}}
