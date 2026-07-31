@@ -614,11 +614,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
       <button class="btn btn-outline" style="width:100%;margin-top:6px;font-size:0.72rem" onclick="refreshFinanceNews()">🔄 刷新新闻</button>
     </div>
     <div class="card" style="margin-top:10px">
-      <div class="card-title">💡 短线小资推荐</div>
+      <div class="card-title">💡 短线小资推荐 <span style="font-size:0.6rem;color:var(--text2)">0~20元低价精选</span></div>
       <div id="stock-picks-list">
         <div class="text-sm" style="text-align:center;padding:10px" id="stock-picks-loading">加载中...</div>
       </div>
-      <button class="btn btn-outline" style="width:100%;margin-top:6px;font-size:0.72rem" onclick="refreshStockPicks()">🔄 刷新推荐</button>
+      <div id="pick-review-area" style="margin-top:8px"></div>
+      <button class="btn btn-outline" style="width:100%;margin-top:6px;font-size:0.72rem" onclick="refreshStockPicks()">🔄 刷新推荐+实时价格</button>
     </div>
     <div class="card" style="margin-top:10px">
       <div class="card-title">📈 自选股关注</div>
@@ -1051,44 +1052,43 @@ function renderFinanceNewsDigest(newsList){
   document.getElementById('finance-news-list').innerHTML=html||'<div class="text-sm" style="text-align:center;padding:8px">暂无新闻</div>';
 }
 
-// 短线小资推荐策略：基于实时热门板块和资金流向筛选
+// 短线小资推荐：0-20元低价小盘股，含买卖时机和复盘理由
 const STOCK_PICK_POOL=[
-  {code:'601899',name:'紫金矿业',sector:'有色金属',style:'稳健',reason:'全球金价上行周期，业绩确定性强，适合小仓位配置'},
-  {code:'002594',name:'比亚迪',sector:'新能源车',style:'成长',reason:'新能源龙头，出口增长强劲，短线回调即是买点'},
-  {code:'300750',name:'宁德时代',sector:'锂电池',style:'成长',reason:'电池龙头估值修复中，外资持续加仓'},
-  {code:'600519',name:'贵州茅台',sector:'白酒',style:'稳健',reason:'消费复苏预期，白酒旺季临近，防御性配置'},
-  {code:'000858',name:'五粮液',sector:'白酒',style:'稳健',reason:'估值处于历史低位，股息率吸引，中长线看好'},
-  {code:'601318',name:'中国平安',sector:'金融',style:'价值',reason:'保险龙头估值修复，利率上行利好'},
-  {code:'600036',name:'招商银行',sector:'银行',style:'价值',reason:'零售银行标杆，高股息+低估值，防御首选'},
-  {code:'300274',name:'阳光电源',sector:'光伏',style:'成长',reason:'逆变器龙头出海加速，订单饱满'},
-  {code:'601012',name:'隆基绿能',sector:'光伏',style:'成长',reason:'光伏龙头底部震荡，产能出清后弹性大'},
-  {code:'002475',name:'立讯精密',sector:'消费电子',style:'成长',reason:'苹果链核心供应商，AI手机换机潮受益'},
-  {code:'600809',name:'山西汾酒',sector:'白酒',style:'成长',reason:'清香型龙头全国化加速，业绩增速领先'},
-  {code:'688981',name:'中芯国际',sector:'芯片',style:'主题',reason:'国产替代核心标的，政策持续加码'},
-  {code:'300059',name:'东方财富',sector:'券商',style:'弹性',reason:'互联网券商龙头，行情回暖直接受益'},
-  {code:'601888',name:'中国中免',sector:'免税',style:'反转',reason:'免税龙头超跌，出境游恢复带来业绩弹性'},
-  {code:'000725',name:'京东方A',sector:'面板',style:'周期',reason:'面板价格企稳回升，业绩拐点已现'},
-  {code:'600276',name:'恒瑞医药',sector:'医药',style:'反转',reason:'创新药龙头管线收获期，集采影响出清'},
-  {code:'300124',name:'汇川技术',sector:'工控',style:'成长',reason:'工业自动化龙头，机器人概念加持'},
-  {code:'002230',name:'科大讯飞',sector:'AI',style:'主题',reason:'AI大模型龙头，星火大模型持续迭代'},
-  {code:'600900',name:'长江电力',sector:'电力',style:'红利',reason:'水电龙头稳定分红，避险资金最爱'},
-  {code:'601857',name:'中国石油',sector:'石油',style:'红利',reason:'能源央企高股息，油价支撑业绩'},
-  {code:'601138',name:'工业富联',sector:'AI算力',style:'成长',reason:'AI服务器龙头，英伟达核心合作伙伴'},
-  {code:'300308',name:'中际旭创',sector:'光模块',style:'成长',reason:'800G光模块龙头，AI算力需求爆发'},
-  {code:'002371',name:'北方华创',sector:'半导体设备',style:'成长',reason:'国产半导体设备龙头，自主可控核心'},
-  {code:'601398',name:'工商银行',sector:'银行',style:'红利',reason:'宇宙行高股息，国家队护盘首选'},
-  {code:'600030',name:'中信证券',sector:'券商',style:'弹性',reason:'券商龙头，行情回暖业绩弹性最大'},
-  {code:'000001',name:'平安银行',sector:'银行',style:'价值',reason:'零售转型成效显著，估值修复空间大'},
-  {code:'002415',name:'海康威视',sector:'安防',style:'稳健',reason:'AI+安防龙头，海外业务恢复增长'},
-  {code:'603259',name:'药明康德',sector:'CXO',style:'反转',reason:'CXO龙头海外订单恢复，超跌反弹'},
-  {code:'688041',name:'海光信息',sector:'国产CPU',style:'主题',reason:'国产CPU龙头，信创政策持续催化'},
-  {code:'600050',name:'中国联通',sector:'运营商',style:'红利',reason:'运营商高股息+数据要素概念，攻守兼备'},
+  {code:'000725',name:'京东方A',priceRange:'3~5元',sector:'面板',style:'周期反转',buySignal:'股价站上5日均线且MACD金叉时介入',sellSignal:'单日涨幅超5%减半仓，跌破10日均线清仓',reason:'面板价格企稳回升，Q2业绩拐点确认，3元附近安全边际极高，小资金友好'},
+  {code:'600010',name:'包钢股份',priceRange:'1~3元',sector:'钢铁/稀土',style:'低价弹性',buySignal:'成交量放大至前日2倍且站上2元关口',sellSignal:'冲高回落3%止盈，跌破1.8元止损',reason:'稀土+钢铁双概念，1元股中基本面最扎实，牛市弹性极大'},
+  {code:'601899',name:'紫金矿业',priceRange:'12~18元',sector:'有色金属',style:'稳健',buySignal:'回踩20日均线不破时分批建仓',sellSignal:'放量滞涨或跌破18元减仓',reason:'全球铜金龙头，美元降息周期利好，12元以下都是黄金坑'},
+  {code:'002131',name:'利欧股份',priceRange:'2~5元',sector:'数字营销',style:'主题',buySignal:'回调至60日均线附近缩量企稳时',sellSignal:'拉升15%分批止盈',reason:'AI数字营销概念，2元低价小盘弹性足，游资偏好标的'},
+  {code:'600157',name:'永泰能源',priceRange:'1~3元',sector:'电力/煤炭',style:'低价红利',buySignal:'横盘缩量3天以上放量突破时',sellSignal:'赚10%就跑不贪',reason:'煤电一体化最便宜标的，每年稳定分红，1元多股价下跌空间有限'},
+  {code:'000630',name:'铜陵有色',priceRange:'3~5元',sector:'有色金属',style:'周期',buySignal:'铜价反弹配合股价站上5日线',sellSignal:'铜价回落或跌破30日线',reason:'铜资源储量丰富，3元低价铜矿股，跟随国际铜价弹性好'},
+  {code:'002610',name:'爱康科技',priceRange:'2~4元',sector:'光伏',style:'超跌反弹',buySignal:'光伏板块回暖日率先放量涨停时追入',sellSignal:'次日高开不封板即走',reason:'光伏超跌品种，2元低价位游资最爱，板块反弹时弹性极大'},
+  {code:'600221',name:'海南航空',priceRange:'1~3元',sector:'航空',style:'困境反转',buySignal:'暑运/春运旺季前1个月布局',sellSignal:'旺季结束前获利了结',reason:'航空业复苏+海南自贸港概念，1元低价适合小资金分批布局'},
+  {code:'000100',name:'TCL科技',priceRange:'3~6元',sector:'面板',style:'周期',buySignal:'面板报价上涨+股价放量突破6元',sellSignal:'面板价格转跌信号出现时',reason:'面板双雄之一，与京东方联动，3~6元区间高抛低吸节奏明确'},
+  {code:'002195',name:'岩山科技',priceRange:'2~5元',sector:'互联网',style:'题材',buySignal:'AI/数字经济政策发布次日竞价高开时',sellSignal:'炒作退潮跌破5日线果断走',reason:'低价互联网平台股，AI概念加持，2元价位适合短线快进快出'},
+  {code:'600808',name:'马钢股份',priceRange:'2~4元',sector:'钢铁',style:'低价周期',buySignal:'钢铁板块异动+螺纹钢期货上涨日',sellSignal:'板块退潮或盈利10%止盈',reason:'钢铁低价龙头，基建投资加码受益，2元多股价破净安全边际高'},
+  {code:'000959',name:'首钢股份',priceRange:'3~5元',sector:'钢铁',style:'价值',buySignal:'PB破0.8时定投式买入',sellSignal:'PB修复至1.0以上分批卖出',reason:'破净钢铁股，3元价位定投标杆，京津冀基建核心受益'},
+  {code:'002665',name:'首航高科',priceRange:'2~5元',sector:'新能源',style:'超跌',buySignal:'储能政策利好发布日竞价抢筹',sellSignal:'利好兑现即走不恋战',reason:'光热储能概念，2元低价小盘弹性标的，政策催化型短线'},
+  {code:'601608',name:'中信重工',priceRange:'3~6元',sector:'机械',style:'稳健',buySignal:'突破平台整理上轨放量时',sellSignal:'冲高回落跌破5日线',reason:'重型机械龙头+军工概念，3元多股价低位震荡适合波段'},
+  {code:'002146',name:'荣盛发展',priceRange:'1~3元',sector:'地产',style:'超跌反转',buySignal:'地产政策利好+板块异动首日',sellSignal:'政策热度消退或赚15%即走',reason:'地产最便宜标的之一，政策刺激时弹性最大，1元股极限博弈'},
+  {code:'600166',name:'福田汽车',priceRange:'2~5元',sector:'汽车',style:'价值',buySignal:'商用车销量数据回暖时布局',sellSignal:'利好兑现或站上5元后减仓',reason:'商用车龙头+氢能源概念，2元低价安全边际高，等待周期反转'},
+  {code:'000825',name:'太钢不锈',priceRange:'3~6元',sector:'钢铁/镍',style:'周期',buySignal:'镍价上涨+钢铁板块共振时',sellSignal:'板块退潮或单周涨10%止盈',reason:'不锈钢龙头+镍资源概念，3元低价双题材弹性标的'},
+  {code:'002385',name:'大北农',priceRange:'5~9元',sector:'农业',style:'防御',buySignal:'猪肉价格上涨周期+种业政策利好',sellSignal:'猪价回落或盈利15%止盈',reason:'农业+种业双龙头，5元价位攻守兼备，转基因种子商业化受益'},
+  {code:'600022',name:'山东钢铁',priceRange:'1~3元',sector:'钢铁',style:'低价',buySignal:'钢铁板块集体异动时跟进',sellSignal:'快进快出赚5%就跑',reason:'1元钢铁股，牛市补涨标的，适合小资金博弹性'},
+  {code:'002108',name:'沧州明珠',priceRange:'3~6元',sector:'锂电隔膜',style:'成长',buySignal:'锂电池板块回暖+隔膜涨价消息',sellSignal:'反弹15%分批止盈',reason:'锂电隔膜细分龙头，3元低价+新能源赛道，下跌空间有限'},
+  {code:'000932',name:'华菱钢铁',priceRange:'4~7元',sector:'钢铁',style:'价值',buySignal:'PE低于5倍时定投',sellSignal:'PE修复至8倍以上分批卖',reason:'钢铁盈利之王，4元股价对应极低PE，高股息适合压舱'},
+  {code:'600307',name:'酒钢宏兴',priceRange:'1~3元',sector:'钢铁',style:'低价弹性',buySignal:'钢铁板块涨停潮次日跟风',sellSignal:'不涨停即出',reason:'最低价钢铁股之一，板块行情来临时弹性最大'},
+  {code:'002285',name:'世联行',priceRange:'2~5元',sector:'地产服务',style:'超跌',buySignal:'地产政策放松信号+放量涨停',sellSignal:'政策热度退潮即走',reason:'地产服务龙头超跌，2元低价+政策博弈型短线'},
+  {code:'000709',name:'河钢股份',priceRange:'2~4元',sector:'钢铁',style:'低价',buySignal:'雄安+基建政策催化日',sellSignal:'利好兑现次日高开即走',reason:'河北钢铁龙头+雄安概念，2元低价安全边际好'},
+  {code:'600567',name:'山鹰国际',priceRange:'2~4元',sector:'造纸',style:'周期反转',buySignal:'纸价上涨+废纸进口政策变化',sellSignal:'涨幅15%止盈或纸价回落',reason:'包装纸龙头，2元低价周期反转博弈，产能出清后弹性大'},
+  {code:'002503',name:'搜于特',priceRange:'1~3元',sector:'服装',style:'超跌',buySignal:'消费复苏数据+放量涨停',sellSignal:'不涨停即走快进快出',reason:'最低价消费股，超跌反弹型短线，适合小资金极限博弈'},
+  {code:'601118',name:'海南橡胶',priceRange:'4~7元',sector:'农业/橡胶',style:'周期',buySignal:'橡胶期货价格上涨周期',sellSignal:'橡胶价格回落或涨幅15%',reason:'天然橡胶龙头+海南自贸港，4元低价等待橡胶周期反转'},
+  {code:'000778',name:'新兴铸管',priceRange:'3~6元',sector:'钢铁/水利',style:'价值',buySignal:'水利基建政策催化+放量',sellSignal:'政策热度消退或10%止盈',reason:'铸管龙头+水利基建概念，3元低价分红稳定'},
+  {code:'600255',name:'鑫科材料',priceRange:'2~5元',sector:'新材料',style:'题材',buySignal:'新材料政策+放量突破平台',sellSignal:'冲高回落破5日线即走',reason:'铜合金新材料标的，2元低价小盘弹性好，政策催化型'},
+  {code:'002122',name:'ST天马',priceRange:'2~5元',sector:'轴承',style:'摘帽',buySignal:'ST摘帽预期+业绩改善公告',sellSignal:'摘帽利好兑现即走',reason:'轴承细分龙头ST待摘帽，2元低价博弈摘帽行情'},
 ];
 
 function getStockPickOfDay(){
   const today=new Date();
   const seed=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
-  // 基于日期种子伪随机选股，每天固定
   function seededRandom(s){
     let h=0;
     for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
@@ -1096,13 +1096,11 @@ function getStockPickOfDay(){
     return x-Math.floor(x);
   }
   const pool=[...STOCK_PICK_POOL];
-  // Fisher-Yates shuffle with seeded random
   const seedStr=String(seed);
   for(let i=pool.length-1;i>0;i--){
-    const j=Math.floor(seededRandom(seedStr+'_'+i)* (i+1));
+    const j=Math.floor(seededRandom(seedStr+'_'+i)*(i+1));
     [pool[i],pool[j]]=[pool[j],pool[i]];
   }
-  // 选5只，兼顾不同风格
   const picked=[];
   const styles=new Set();
   for(const s of pool){
@@ -1115,35 +1113,111 @@ function getStockPickOfDay(){
   return picked;
 }
 
-function renderStockPicks(){
+async function renderStockPicks(){
   const el=document.getElementById('stock-picks-list');
   const loading=document.getElementById('stock-picks-loading');
-  if(loading)loading.style.display='none';
+  if(loading)loading.style.display='block';
   const picks=getStockPickOfDay();
-  const levels=['⭐⭐⭐ 强烈关注','⭐⭐ 值得关注','⭐ 适当关注'];
+  const levels=['⭐⭐⭐ 今日首选','⭐⭐ 重点关注','⭐ 适当参与','⭐ 备选关注','⭐ 备选关注'];
   const colors=['#e74c3c','#f39c12','#f2a0b6','#9b59b6','#3498db'];
+  
+  // 先渲染静态内容
   let html='';
   picks.forEach((s,i)=>{
-    const targetPrice=(parseFloat(s.code)>600000?'长线':'短线')+(i<2?'，目标+8%~15%':',目标+5%~10%');
-    const stopLoss=i<2?'止损-5%':'止损-3%';
-    html+=`<div class="stock-pick-card">
-      <div><span class="stock-pick-badge" style="background:${colors[i]}">${levels[i]}</span><span class="pick-code">${s.code}</span> <span style="font-weight:600">${s.name}</span> <span style="font-size:0.65rem;color:var(--text2)">${s.sector}</span></div>
-      <div class="pick-reason">💬 ${s.reason}</div>
-      <div class="pick-meta"><span>🎯 ${targetPrice}</span><span>🛑 ${stopLoss}</span><span style="color:${colors[i]}">🏷 ${s.style}</span></div>
+    html+=`<div class="stock-pick-card" id="pick-${i}">
+      <div><span class="stock-pick-badge" style="background:${colors[i]}">${levels[i]}</span><span class="pick-code">${s.code}</span> <span style="font-weight:600">${s.name}</span> <span style="font-size:0.65rem;color:var(--text2)">${s.sector} | ${s.priceRange}</span></div>
+      <div class="pick-reason">📊 理由：${s.reason}</div>
+      <div class="pick-meta"><span style="color:#e74c3c">🟢 买入：${s.buySignal}</span></div>
+      <div class="pick-meta"><span style="color:#27ae60">🔴 卖出：${s.sellSignal}</span></div>
+      <div id="pick-price-${i}" class="pick-meta" style="margin-top:3px"><span>⏳ 加载实时价...</span></div>
     </div>`;
   });
   el.innerHTML=html;
-  // 缓存到window供复盘使用
+  if(loading)loading.style.display='none';
   window._stockPicks=picks;
+  
+  // 异步获取实时价格
+  for(let i=0;i<picks.length;i++){
+    try{
+      const code=picks[i].code;
+      let secid='';
+      if(code.startsWith('6'))secid=`1.${code}`;
+      else if(code.startsWith('0')||code.startsWith('3'))secid=`0.${code}`;
+      else secid=`1.${code}`;
+      const resp=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f44,f45,f58,f57,f170,f169,f60,f46,f47,f48`);
+      const json=await resp.json();
+      if(json&&json.data){
+        const d=json.data;
+        const price=(d.f43/100).toFixed(2);
+        const pct=((d.f170||0)/100).toFixed(2);
+        const isUp=d.f170>=0;
+        const open=(d.f46/100).toFixed(2);
+        const high=(d.f44/100).toFixed(2);
+        const low=(d.f45/100).toFixed(2);
+        const vol=d.f47?Math.round(d.f47/10000):0;
+        const priceEl=document.getElementById('pick-price-'+i);
+        if(priceEl){
+          // 判断买入时机：涨幅-2%~2%之间且今日低开高走
+          const pctNum=parseFloat(pct);
+          let buyAdvice='',sellAdvice='';
+          if(pctNum>=-2&&pctNum<=2&&parseFloat(price)>parseFloat(open)){
+            buyAdvice='✅ 可关注建仓';
+          }else if(pctNum>5){
+            buyAdvice='⚠️ 已大涨，等待回调';
+            sellAdvice=' | 🔔 短线可考虑减仓';
+          }else if(pctNum<-3){
+            buyAdvice='🔻 深跌中，观望等待企稳';
+          }else{
+            buyAdvice='⏸ 观望为主';
+          }
+          priceEl.innerHTML=`<span>💰 现价 <b style="color:${isUp?'#e74c3c':'#27ae60'}">¥${price}</b> ${isUp?'+':''}${pct}%</span><span>今开${open} 高${high} 低${low}</span><span>量${vol}万手</span><span style="font-weight:700;color:${buyAdvice.includes('可关注')?'#e74c3c':buyAdvice.includes('大涨')?'#f39c12':'#888'}">${buyAdvice}${sellAdvice}</span>`;
+        }
+      }
+    }catch(e){}
+  }
 }
 
 function refreshStockPicks(){
   document.getElementById('stock-picks-loading').style.display='block';
   document.getElementById('stock-picks-list').innerHTML='';
-  setTimeout(()=>{
-    renderStockPicks();
-    toast('✅ 今日短线推荐已更新！');
-  },600);
+  document.getElementById('pick-review-area').innerHTML='';
+  setTimeout(async()=>{
+    await renderStockPicks();
+    // 异步加载复盘
+    setTimeout(async()=>{
+      await generatePickReview();
+      if(window._pickReviewHtml){
+        document.getElementById('pick-review-area').innerHTML=window._pickReviewHtml;
+      }
+    },2000);
+    toast('✅ 短线推荐+实时价格已更新！');
+  },400);
+}
+
+// ====== 每日复盘理由（基于推荐股票池表现） ======
+async function generatePickReview(){
+  const picks=window._stockPicks||[];
+  if(picks.length===0)return;
+  let reviewHtml='<div class="section-title">📋 今日推荐复盘</div>';
+  let winCount=0;
+  for(let i=0;i<picks.length;i++){
+    try{
+      const code=picks[i].code;
+      let secid=code.startsWith('6')?`1.${code}`:`0.${code}`;
+      const resp=await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f170,f58`);
+      const json=await resp.json();
+      if(json&&json.data){
+        const d=json.data;
+        const pct=((d.f170||0)/100).toFixed(2);
+        const pctNum=parseFloat(pct);
+        if(pctNum>0)winCount++;
+        const emoji=pctNum>3?'🔥':pctNum>0?'✅':pctNum>-3?'⏸':'🔻';
+        reviewHtml+=`<div class="news-digest">${emoji} <b>${picks[i].name}</b>(${picks[i].code}) 今日${pctNum>=0?'+':''}${pct}% — ${pctNum>3?'强势上攻，持有待涨':pctNum>0?'小幅收红，趋势向好':pctNum>-3?'微跌整理，继续观察':'跌幅较大，关注止损位'}</div>`;
+      }
+    }catch(e){}
+  }
+  reviewHtml+=`<div class="news-digest" style="border-left-color:var(--accent);margin-top:6px">📊 <b>今日战绩：${winCount}/${picks.length}只上涨</b>，胜率${Math.round(winCount/picks.length*100)}%。${winCount>=4?'🎉 表现优秀！':winCount>=2?'👍 表现尚可':winCount>=1?'📉 表现一般，注意风险':'⚠️ 全线回调，控制仓位'}</div>`;
+  window._pickReviewHtml=reviewHtml;
 }
 
 function saveReview(){
@@ -2012,7 +2086,16 @@ function renderAll(){renderTodos();renderBills();renderCheckins();renderDiaries(
 initData();renderAll();
 setTimeout(()=>{const d=getData();if(d.finance&&d.finance.length>0)refreshFinance();},1500);
 // 预加载金融新闻和短线推荐
-setTimeout(()=>{refreshFinanceNews();renderStockPicks();},800);
+setTimeout(async()=>{
+  refreshFinanceNews();
+  await renderStockPicks();
+  setTimeout(async()=>{
+    await generatePickReview();
+    if(window._pickReviewHtml){
+      document.getElementById('pick-review-area').innerHTML=window._pickReviewHtml;
+    }
+  },2500);
+},800);
 
 // === PWA Service Worker ===
 if('serviceWorker' in navigator){
