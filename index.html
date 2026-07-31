@@ -2,7 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="美乐蒂工作台">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fff5f7">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%23fff5f7'/%3E%3Ccircle cx='96' cy='55' r='22' fill='%23ffb3c6'/%3E%3Ccircle cx='64' cy='80' r='13' fill='%23ffb3c6'/%3E%3Ccircle cx='128' cy='80' r='13' fill='%23ffb3c6'/%3E%3Cellipse cx='96' cy='105' rx='30' ry='20' fill='%23fff'/%3E%3Ccircle cx='78' cy='100' r='4' fill='%23333'/%3E%3Ccircle cx='114' cy='100' r='4' fill='%23333'/%3E%3Cpath d='M88 112 Q96 122 104 112' fill='none' stroke='%23f2a0b6' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIue+juS5vei+s+W3peS9nOWPsCIsCiAgInNob3J0X25hbWUiOiAi576O5Lm96IawIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmZmY1ZjciLAogICJ0aGVtZV9jb2xvciI6ICIjZmZmNWY3IiwKICAiaWNvbnMiOiBbewogICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDE5MiAxOTInJTNFJTNDcmVjdCB3aWR0aD0nMTkyJyBoZWlnaHQ9JzE5Micgcng9JzM2JyBmaWxsPSclMjNmZmY1ZjcnLyUzRSUzQ2NpcmNsZSBjeD0nOTYnIGN5PSc1NScgcj0nMjInIGZpbGw9JyUyM2ZmYjNjNicvJTNFJTNDY2lyY2xlIGN4PSc2NCcgY3k9JzgwJyByPScxMycgZmlsbD0nJTIzZmZiM2M2Jy8lM0UlM0NjaXJjbGUgY3g9JzEyOCcgY3k9JzgwJyByPScxMycgZmlsbD0nJTIzZmZiM2M2Jy8lM0UlM0NlbGxpcHNlIGN4PSc5NicgY3k9JzEwNScgcng9JzMwJyByeT0nMjAnIGZpbGw9JyUyM2ZmZicvJTNFJTNDY2lyY2xlIGN4PSc3OCcgY3k9JzEwMCcgcj0nNCcgZmlsbD0nJTIzMzMzJy8lM0UlM0NjaXJjbGUgY3g9JzExNCcgY3k9JzEwMCcgcj0nNCcgZmlsbD0nJTIzMzMzJy8lM0UlM0NwYXRoIGQ9J004OCAxMTIgUTk2IDEyMiAxMDQgMTEyJyBmaWxsPSdub25lJyBzdHJva2U9JyUyM2YyYTBiNicgc3Ryb2tlLXdpZHRoPScyLjUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvJTNFJTNDL3N2ZyUzRSIsCiAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogIH1dfQo=">
 <title>美乐蒂工作台</title>
 <style>
 :root {
@@ -1821,6 +1828,17 @@ function renderAll(){renderTodos();renderBills();renderCheckins();renderDiaries(
 
 initData();renderAll();
 setTimeout(()=>{const d=getData();if(d.finance&&d.finance.length>0)refreshFinance();},1500);
+
+// === PWA Service Worker ===
+if('serviceWorker' in navigator){
+  const swCode = `const CACHE='meiledi-v2';
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['.'])).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res.ok){const rc=res.clone();caches.open(CACHE).then(c=>c.put(e.request,rc))}return res}).catch(()=>caches.match(e.request))))});`;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl,{scope:'/'}).catch(()=>{});
+}
 </script>
 </body>
 </html>
